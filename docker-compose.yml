@@ -1,0 +1,121 @@
+networks:
+  api_sentinel_net:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: api-sentinel-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=api_sentinel
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - api_sentinel_net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  security-engine:
+    build:
+      context: ./security-engine
+      dockerfile: Dockerfile
+    container_name: api-sentinel-security-engine
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    networks:
+      - api_sentinel_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  vulnerable-lab:
+    build:
+      context: ./vulnerable-lab
+      dockerfile: Dockerfile
+    container_name: api-sentinel-vulnerable-lab
+    restart: unless-stopped
+    ports:
+      - "5050:5050"
+    environment:
+      - PORT=5050
+      - NODE_ENV=production
+    networks:
+      - api_sentinel_net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5050/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: api-sentinel-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/api_sentinel
+      - JWT_SECRET=api-sentinel-jwt-super-secret-key-production-strength-2026
+      - ENCRYPTION_MASTER_KEY=12345678901234567890123456789012
+      - SECURITY_ENGINE_URL=http://security-engine:8000
+      - VULNERABLE_LAB_URL=http://vulnerable-lab:5050
+      - SSRF_STRICT=true
+      - ALLOWED_HOSTS=localhost,127.0.0.1,host.docker.internal,vulnerable-lab
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      security-engine:
+        condition: service_healthy
+      vulnerable-lab:
+        condition: service_healthy
+    networks:
+      - api_sentinel_net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: api-sentinel-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - api_sentinel_net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

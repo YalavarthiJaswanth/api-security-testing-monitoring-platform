@@ -1,0 +1,12 @@
+{
+  "name": "api-sentinel-vulnerable-lab",
+  "version": "1.0.0",
+  "description": "Safe, local vulnerable API simulation environment for OWASP API Security testing",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
