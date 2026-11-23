@@ -186,6 +186,14 @@ API Sentinel implements strict target filtering. By default:
 
 ---
 
-## 👤 Author
-**Yalavarthi Jaswanth**  
-GitHub: [@YalavarthiJaswanth](https://github.com/YalavarthiJaswanth)
+## 👥 Core Development Team & Contributors
+
+| Team Member | GitHub Profile | Project Contributions & Responsibilities |
+| :--- | :--- | :--- |
+| **Yalavarthi Jaswanth** (Lead) | [@YalavarthiJaswanth](https://github.com/YalavarthiJaswanth) | Full-Stack Platform Architecture, Backend REST APIs, AES-256 Vault, Kind Kubernetes & CI/CD Pipeline |
+| **Pramodh Chitta** | [@chittapramodh05](https://github.com/chittapramodh05) | OWASP Vulnerability Testing Heuristics, Simulation Lab Scenarios, Scanner Pytest Suite & Exploit Guides |
+
+---
+
+## 📜 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
