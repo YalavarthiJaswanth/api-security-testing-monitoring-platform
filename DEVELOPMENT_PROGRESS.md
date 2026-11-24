@@ -88,3 +88,4 @@
 7. Kubernetes Kind Deployment: PASSED (All 5 pods 1/1 Running in `api-sentinel` namespace).
 8. GitHub Remote Push: PASSED (`main` branch synced).
 9. Team Collaboration & Contributor Onboarding: PASSED (Pramodh Chitta `@chittapramodh05` invited as repository collaborator; added automated scanner pytest suites and simulation scenario documentation).
+10. Team Collaboration & Contributor Onboarding: PASSED (Anjan Krishna `@Anjankrishna260106` invited as repository collaborator; added automated monitoring unit tests and executive compliance specification).
