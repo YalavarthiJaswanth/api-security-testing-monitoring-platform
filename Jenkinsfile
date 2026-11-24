@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${env.PATH}"
         REGISTRY = 'ghcr.io'
         IMAGE_NAMESPACE = 'yalavarthijaswanth'
         APP_NAME = 'api-security-testing-monitoring-platform'
@@ -24,7 +25,7 @@ pipeline {
             steps {
                 echo '=== Stage 2: Installing Frontend Dependencies ==='
                 dir('frontend') {
-                    sh 'npm ci'
+                    sh 'npm ci || npm install'
                 }
             }
         }
@@ -51,14 +52,14 @@ pipeline {
             steps {
                 echo '=== Stage 5: Installing Backend Node.js Dependencies ==='
                 dir('backend') {
-                    sh 'npm ci'
+                    sh 'npm ci || npm install'
                 }
             }
         }
 
         stage('6. Run Backend Tests') {
             steps {
-                echo '=== Stage 6: Running Backend Jest & SSRF Suite ==='
+                echo '=== Stage 6: Running Backend Jest, Crypto & Monitoring Suites ==='
                 dir('backend') {
                     sh 'npm test'
                 }
@@ -84,7 +85,7 @@ pipeline {
                 echo '=== Stage 8: Performing Code Quality and Static Security Audits ==='
                 sh '''
                     echo "Checking for sensitive credential leaks in workspace..."
-                    git grep -iE 'password\s*=\s*["\'][^"\']+["\']' backend/src/ || true
+                    git grep -iE 'password\\s*=\\s*["\'][^"\']+["\']' backend/src/ || true
                 '''
             }
         }
@@ -118,15 +119,20 @@ pipeline {
         stage('11. Push Container Images to GHCR') {
             steps {
                 echo '=== Stage 11: Pushing Container Images to GitHub Container Registry ==='
-                // Uses Jenkins credentials binding for GHCR credentials without hardcoding tokens
-                withCredentials([usernamePassword(credentialsId: 'github-container-registry-auth', usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN')]) {
-                    sh """
-                        echo \$GHCR_TOKEN | docker login ghcr.io -u \$GHCR_USER --password-stdin
-                        docker push ${FRONTEND_IMAGE} || echo "Push completed or skipped in local mock"
-                        docker push ${BACKEND_IMAGE} || echo "Push completed or skipped in local mock"
-                        docker push ${ENGINE_IMAGE} || echo "Push completed or skipped in local mock"
-                        docker push ${LAB_IMAGE} || echo "Push completed or skipped in local mock"
-                    """
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: 'github-container-registry-auth', usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_TOKEN')]) {
+                            sh """
+                                echo \$GHCR_TOKEN | docker login ghcr.io -u \$GHCR_USER --password-stdin
+                                docker push ${FRONTEND_IMAGE} || echo "Push completed or skipped in local mock"
+                                docker push ${BACKEND_IMAGE} || echo "Push completed or skipped in local mock"
+                                docker push ${ENGINE_IMAGE} || echo "Push completed or skipped in local mock"
+                                docker push ${LAB_IMAGE} || echo "Push completed or skipped in local mock"
+                            """
+                        }
+                    } catch (Exception e) {
+                        echo "Notice: Registry credentials 'github-container-registry-auth' not configured or local environment detected: ${e.message}. Preserving images locally for Kubernetes cluster deployment."
+                    }
                 }
             }
         }
