@@ -41,7 +41,6 @@ if (config.nodeEnv !== 'test') {
 }
 
 let dbConnectionPromise: Promise<typeof mongoose> | null = null;
-let seededDefaultUser = false;
 
 /**
  * Reuse cached Mongoose connection across serverless invocations while keeping
@@ -51,34 +50,53 @@ export async function ensureDatabaseConnected(): Promise<void> {
   if (mongoose.connection.readyState === 1) {
     return;
   }
+  if (process.env.VERCEL && !process.env.MONGODB_URI) {
+    const cfgErr: any = new Error('Database configuration missing: MONGODB_URI must be configured in Vercel environment variables.');
+    cfgErr.statusCode = 503;
+    throw cfgErr;
+  }
   if (!dbConnectionPromise) {
-    dbConnectionPromise = mongoose.connect(config.mongoUri).catch((err) => {
-      dbConnectionPromise = null;
-      throw err;
-    });
+    dbConnectionPromise = mongoose
+      .connect(config.mongoUri, {
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000
+      })
+      .catch((err) => {
+        dbConnectionPromise = null;
+        const dbErr: any = new Error(`Database connection failed: ${err.message}`);
+        dbErr.statusCode = 503;
+        throw dbErr;
+      });
   }
   await dbConnectionPromise;
-  if (!seededDefaultUser) {
-    seededDefaultUser = true;
-    await seedDefaultUser();
-  }
 }
 
 // Health Check Endpoint
-app.get(['/health', '/api/health'], (req, res) => {
-  res.json({
-    status: 'healthy',
+app.get(['/health', '/api/health'], async (req, res) => {
+  let dbError: string | undefined;
+  if (process.env.VERCEL && config.nodeEnv !== 'test') {
+    try {
+      await ensureDatabaseConnected();
+    } catch (err: any) {
+      dbError = err.message;
+    }
+  }
+  const dbConnected = mongoose.connection.readyState === 1;
+  const httpStatus = process.env.VERCEL && !dbConnected ? 503 : 200;
+  res.status(httpStatus).json({
+    status: dbConnected ? 'healthy' : 'degraded',
     service: 'api-sentinel-backend',
     uptimeSeconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    database: dbConnected ? 'connected' : 'disconnected',
+    ...(dbError ? { error: dbError } : {}),
     https: config.httpsEnabled ? `Active on port ${config.httpsPort}` : 'Disabled'
   });
 });
 
 // Ensure MongoDB connection is ready during Vercel serverless invocations
 app.use(async (req, res, next) => {
-  if (process.env.VERCEL && config.nodeEnv !== 'test') {
+  if (process.env.VERCEL && config.nodeEnv !== 'test' && req.path !== '/health' && req.path !== '/api/health') {
     try {
       await ensureDatabaseConnected();
     } catch (err) {
@@ -132,8 +150,10 @@ export async function startServer(): Promise<RunningServers | undefined> {
     await mongoose.connect(config.mongoUri);
     console.log('[Database] MongoDB connection established successfully.');
 
-    // Seed default demo user if needed
-    await seedDefaultUser();
+    // Seed default local development demo user only outside production/serverless
+    if (config.nodeEnv !== 'production' && !process.env.VERCEL) {
+      await seedDefaultUser();
+    }
 
     // Start background monitoring scheduler
     monitoringWorker.start(config.monitoringIntervalDefault);

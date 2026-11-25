@@ -10,6 +10,7 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('security_engineer');
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const { login, register } = useAuth();
@@ -18,6 +19,7 @@ export const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setInfo(null);
     setLoading(true);
 
     try {
@@ -28,16 +30,28 @@ export const Login: React.FC = () => {
       }
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Authentication failed. Please verify credentials.');
+      const apiMessage = typeof err.response?.data === 'object' ? err.response?.data?.message : undefined;
+      if (apiMessage) {
+        setError(apiMessage);
+      } else if (!err.response) {
+        setError('Unable to reach the authentication API. Verify network connectivity and backend service status.');
+      } else if (err.response.status >= 500 || err.response.status === 404 || err.response.status === 405) {
+        setError(`Authentication service error (HTTP ${err.response.status}). Verify Vercel routing and backend logs.`);
+      } else {
+        setError('Authentication failed. Please verify credentials.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleDemoFill = () => {
-    setUsername('jaswanth_security');
-    setEmail('jaswanth@apisentinel.internal');
-    setPassword('SentinelSecure2026!');
+    setError(null);
+    setIsRegister(true);
+    setUsername('security_analyst');
+    setEmail('analyst@example.com');
+    setPassword('');
+    setInfo('Sample registration details populated. Enter your own password (min 6 characters) and submit to register an account.');
   };
 
   return (
@@ -83,6 +97,13 @@ export const Login: React.FC = () => {
           <div className="mb-5 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
             <span>{error}</span>
+          </div>
+        )}
+
+        {info && (
+          <div className="mb-5 p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+            <span>{info}</span>
           </div>
         )}
 

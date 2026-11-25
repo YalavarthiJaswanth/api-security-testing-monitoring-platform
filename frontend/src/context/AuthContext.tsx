@@ -17,7 +17,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('api_sentinel_user');
-    return saved ? JSON.parse(saved) : null;
+    if (!saved) return null;
+    try {
+      return JSON.parse(saved);
+    } catch {
+      localStorage.removeItem('api_sentinel_user');
+      return null;
+    }
   });
   const [token, setToken] = useState<string | null>(() => {
     return localStorage.getItem('api_sentinel_token');
@@ -32,8 +38,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const resp = await api.get('/auth/me');
           setUser(resp.data.user);
           localStorage.setItem('api_sentinel_user', JSON.stringify(resp.data.user));
-        } catch {
-          logout();
+        } catch (err: any) {
+          const status = err?.response?.status;
+          if (status === 401 || status === 403) {
+            logout();
+          }
         }
       }
       setIsLoading(false);
