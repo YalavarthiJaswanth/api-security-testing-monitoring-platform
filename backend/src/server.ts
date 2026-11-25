@@ -11,6 +11,7 @@ import { swaggerSpec } from './config/swagger';
 import { errorHandler } from './middleware/errorHandler';
 import { monitoringWorker } from './services/monitoringWorker';
 import { getOrCreateSslCredentials } from './utils/sslCert';
+import { seedDefaultUser } from './utils/seedDefaultUser';
 
 import authRoutes from './routes/authRoutes';
 import apiRoutes from './routes/apiRoutes';
@@ -94,6 +95,9 @@ export async function startServer(): Promise<RunningServers | undefined> {
     console.log(`[Database] Connecting to MongoDB: ${config.mongoUri}`);
     await mongoose.connect(config.mongoUri);
     console.log('[Database] MongoDB connection established successfully.');
+
+    // Seed default demo user if needed
+    await seedDefaultUser();
 
     // Start background monitoring scheduler
     monitoringWorker.start(config.monitoringIntervalDefault);

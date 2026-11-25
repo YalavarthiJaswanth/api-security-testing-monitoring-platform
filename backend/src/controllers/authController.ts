@@ -53,17 +53,18 @@ export async function register(req: Request, res: Response): Promise<void> {
 
 export async function login(req: Request, res: Response): Promise<void> {
   try {
-    const { emailOrUsername, password } = req.body;
+    const { emailOrUsername, email, username, password } = req.body;
+    const identifier = (emailOrUsername || email || username || '').trim();
 
-    if (!emailOrUsername || !password) {
+    if (!identifier || !password) {
       res.status(400).json({ success: false, message: 'Email/username and password are required.' });
       return;
     }
 
     const user = await User.findOne({
       $or: [
-        { email: emailOrUsername.toLowerCase().trim() },
-        { username: emailOrUsername.trim() }
+        { email: identifier.toLowerCase() },
+        { username: identifier }
       ]
     });
 
