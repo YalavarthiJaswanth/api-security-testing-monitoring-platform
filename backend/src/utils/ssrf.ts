@@ -49,8 +49,22 @@ export function validateTargetUrl(
   // If local lab testing is permitted or hostname is explicitly in allowlist
   const isLabAllowed = options.allowLocalLab || !config.ssrfStrict;
   const allowedList = options.customAllowedHosts || config.allowedHosts;
+  let configuredLabHostname = '';
+  try {
+    if (config.vulnerableLabUrl) {
+      configuredLabHostname = new URL(config.vulnerableLabUrl).hostname.toLowerCase();
+    }
+  } catch {
+    // Ignore malformed optional override URL
+  }
 
-  if (isLabAllowed && (allowedList.includes(hostname) || hostname.includes('vulnerable-lab') || hostname === 'localhost')) {
+  if (
+    isLabAllowed &&
+    (allowedList.includes(hostname) ||
+      hostname.includes('vulnerable-lab') ||
+      hostname === 'localhost' ||
+      (configuredLabHostname && hostname === configuredLabHostname))
+  ) {
     return { isValid: true, normalizedUrl: parsed.toString() };
   }
 

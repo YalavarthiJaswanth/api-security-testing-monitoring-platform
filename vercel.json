@@ -1,0 +1,48 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "frontend": {
+      "root": "frontend/",
+      "framework": "vite"
+    },
+    "backend": {
+      "root": "backend/",
+      "framework": "express",
+      "entrypoint": "src/server.ts",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "security-engine",
+          "format": "url",
+          "env": "SECURITY_ENGINE_URL"
+        },
+        {
+          "type": "service",
+          "service": "vulnerable-lab",
+          "format": "url",
+          "env": "VULNERABLE_LAB_URL"
+        }
+      ]
+    },
+    "security-engine": {
+      "root": "security-engine/",
+      "framework": "fastapi",
+      "entrypoint": "app.main:app"
+    },
+    "vulnerable-lab": {
+      "root": "vulnerable-lab/",
+      "framework": "express",
+      "entrypoint": "src/index.js"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": { "service": "backend" }
+    },
+    {
+      "source": "/(.*)",
+      "destination": { "service": "frontend" }
+    }
+  ]
+}

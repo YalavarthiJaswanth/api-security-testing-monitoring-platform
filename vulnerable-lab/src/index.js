@@ -107,6 +107,10 @@ app.post('/api/v1/lab/admin/users/grant-admin', (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Vulnerable Lab] Simulation service running on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Vulnerable Lab] Simulation service running on port ${PORT}`);
+  });
+}
+
+module.exports = app;

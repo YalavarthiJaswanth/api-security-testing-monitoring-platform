@@ -1,0 +1,16 @@
+# Exclude standalone QA test projects and container/CI orchestration from Vercel deployments
+API_SENTINEL_UNIT_TESTS
+API_SENTINEL_SELENIUM_TESTS
+Jenkinsfile
+docker-compose.yml
+k8s
+scripts
+certs
+docs
+postman
+**/node_modules
+**/venv
+**/.venv
+**/__pycache__
+**/.pytest_cache
+backend/temp_test_certs

@@ -40,8 +40,32 @@ if (config.nodeEnv !== 'test') {
   app.use(morgan('dev'));
 }
 
+let dbConnectionPromise: Promise<typeof mongoose> | null = null;
+let seededDefaultUser = false;
+
+/**
+ * Reuse cached Mongoose connection across serverless invocations while keeping
+ * traditional server startup unchanged for Docker/Kubernetes/local runs.
+ */
+export async function ensureDatabaseConnected(): Promise<void> {
+  if (mongoose.connection.readyState === 1) {
+    return;
+  }
+  if (!dbConnectionPromise) {
+    dbConnectionPromise = mongoose.connect(config.mongoUri).catch((err) => {
+      dbConnectionPromise = null;
+      throw err;
+    });
+  }
+  await dbConnectionPromise;
+  if (!seededDefaultUser) {
+    seededDefaultUser = true;
+    await seedDefaultUser();
+  }
+}
+
 // Health Check Endpoint
-app.get('/health', (req, res) => {
+app.get(['/health', '/api/health'], (req, res) => {
   res.json({
     status: 'healthy',
     service: 'api-sentinel-backend',
@@ -50,6 +74,18 @@ app.get('/health', (req, res) => {
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     https: config.httpsEnabled ? `Active on port ${config.httpsPort}` : 'Disabled'
   });
+});
+
+// Ensure MongoDB connection is ready during Vercel serverless invocations
+app.use(async (req, res, next) => {
+  if (process.env.VERCEL && config.nodeEnv !== 'test') {
+    try {
+      await ensureDatabaseConnected();
+    } catch (err) {
+      return next(err);
+    }
+  }
+  next();
 });
 
 // Swagger / OpenAPI UI and Specification Endpoints
@@ -147,7 +183,7 @@ export async function startServer(): Promise<RunningServers | undefined> {
   }
 }
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   startServer();
 }
 
