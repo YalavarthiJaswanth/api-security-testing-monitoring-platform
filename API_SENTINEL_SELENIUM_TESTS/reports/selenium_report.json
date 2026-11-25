@@ -1,0 +1,161 @@
+{
+  "project_name": "API Security Testing & Monitoring Platform (API Sentinel)",
+  "executed_at": "2026-11-25T17:38:14.124774+05:30",
+  "base_url": "http://localhost:3000",
+  "browser_mode": "Chrome (Visible Demo Mode)",
+  "overall_status": "PASSED",
+  "summary": {
+    "total_tests": 16,
+    "passed_tests": 14,
+    "failed_tests": 0,
+    "skipped_tests": 2,
+    "pass_percentage": 100.0,
+    "total_duration_seconds": 23.466
+  },
+  "tests": [
+    {
+      "module": "tests.test_application",
+      "name": "test_application_availability_and_login_screen",
+      "status": "PASS",
+      "duration_seconds": 4.053,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_authentication",
+      "name": "test_login_invalid_credentials_displays_error",
+      "status": "PASS",
+      "duration_seconds": 0.942,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_authentication",
+      "name": "test_login_valid_credentials_navigates_to_dashboard",
+      "status": "PASS",
+      "duration_seconds": 0.858,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_dashboard",
+      "name": "test_dashboard_cards_statistics_and_sidebar_navigation",
+      "status": "PASS",
+      "duration_seconds": 0.684,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_api_inventory",
+      "name": "test_register_new_api_and_verify_in_inventory",
+      "status": "PASS",
+      "duration_seconds": 1.43,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_api_inventory",
+      "name": "test_api_inventory_displays_registered_records",
+      "status": "PASS",
+      "duration_seconds": 0.556,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_api_inventory",
+      "name": "test_api_inventory_search_and_filter_availability",
+      "status": "NOT IMPLEMENTED",
+      "duration_seconds": 0.552,
+      "message": "NOT IMPLEMENTED: ApiInventory.tsx does not render search or filter inputs (filtering is implemented on SecurityFindings page).",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_api_workspace",
+      "name": "test_api_workspace_get_jsonplaceholder_real_response",
+      "status": "PASS",
+      "duration_seconds": 1.774,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_api_workspace",
+      "name": "test_api_workspace_post_jsonplaceholder_real_response",
+      "status": "PASS",
+      "duration_seconds": 1.371,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_vulnerability_scanner",
+      "name": "test_vulnerability_scanner_on_local_simulation_target",
+      "status": "PASS",
+      "duration_seconds": 1.978,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_security_findings",
+      "name": "test_security_findings_filtering_empty_state_and_modal",
+      "status": "PASS",
+      "duration_seconds": 2.839,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_monitoring",
+      "name": "test_api_monitoring_health_and_manual_ping",
+      "status": "PASS",
+      "duration_seconds": 1.173,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_simulation_lab",
+      "name": "test_simulation_lab_bola_execution_evidence_and_screenshot",
+      "status": "PASS",
+      "duration_seconds": 1.436,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_simulation_lab",
+      "name": "test_simulation_lab_secure_control_comparison",
+      "status": "NOT IMPLEMENTED",
+      "duration_seconds": 0.553,
+      "message": "NOT IMPLEMENTED: SimulationLab.tsx displays vulnerable response, evidence, and Remediation Fix text, without an interactive secure-endpoint execution comparison toggle.",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_reports",
+      "name": "test_reports_generate_and_download_pdf",
+      "status": "PASS",
+      "duration_seconds": 1.73,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    },
+    {
+      "module": "tests.test_logout",
+      "name": "test_logout_redirects_and_blocks_protected_routes",
+      "status": "PASS",
+      "duration_seconds": 0.949,
+      "message": "",
+      "error_detail": "",
+      "screenshot": null
+    }
+  ]
+}

@@ -14,11 +14,18 @@ venv/
 
 # Environment files and credentials
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 *.pem
 *.key
 *.crt
+
+# Browser, Selenium & CI artifacts
+API_SENTINEL_SELENIUM_TESTS/reports/downloads/
+ci-reports/
+chromedriver*.log
+geckodriver*.log
+*.tmp
 
 # Logs
 *.log

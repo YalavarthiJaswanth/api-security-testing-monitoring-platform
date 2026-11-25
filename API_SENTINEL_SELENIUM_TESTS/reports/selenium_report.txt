@@ -1,0 +1,34 @@
+==============================================================================
+SELENIUM E2E TEST REPORT: API Security Testing & Monitoring Platform (API Sentinel)
+==============================================================================
+Executed At    : 2026-11-25T17:38:14.124774+05:30
+Target URL     : http://localhost:3000
+Browser Mode   : Chrome (Visible Demo Mode)
+Overall Status : PASSED
+------------------------------------------------------------------------------
+Total Tests    : 16
+Passed         : 14
+Failed         : 0
+Skipped / N.I. : 2 (including Not Implemented checks)
+Pass Rate      : 100.0%
+Duration       : 23.466s
+==============================================================================
+
+[PASS] tests.test_application :: test_application_availability_and_login_screen (4.053s)
+[PASS] tests.test_authentication :: test_login_invalid_credentials_displays_error (0.942s)
+[PASS] tests.test_authentication :: test_login_valid_credentials_navigates_to_dashboard (0.858s)
+[PASS] tests.test_dashboard :: test_dashboard_cards_statistics_and_sidebar_navigation (0.684s)
+[PASS] tests.test_api_inventory :: test_register_new_api_and_verify_in_inventory (1.43s)
+[PASS] tests.test_api_inventory :: test_api_inventory_displays_registered_records (0.556s)
+[NOT IMPLEMENTED] tests.test_api_inventory :: test_api_inventory_search_and_filter_availability (0.552s)
+  Note  : NOT IMPLEMENTED: ApiInventory.tsx does not render search or filter inputs (filtering is implemented on SecurityFindings page).
+[PASS] tests.test_api_workspace :: test_api_workspace_get_jsonplaceholder_real_response (1.774s)
+[PASS] tests.test_api_workspace :: test_api_workspace_post_jsonplaceholder_real_response (1.371s)
+[PASS] tests.test_vulnerability_scanner :: test_vulnerability_scanner_on_local_simulation_target (1.978s)
+[PASS] tests.test_security_findings :: test_security_findings_filtering_empty_state_and_modal (2.839s)
+[PASS] tests.test_monitoring :: test_api_monitoring_health_and_manual_ping (1.173s)
+[PASS] tests.test_simulation_lab :: test_simulation_lab_bola_execution_evidence_and_screenshot (1.436s)
+[NOT IMPLEMENTED] tests.test_simulation_lab :: test_simulation_lab_secure_control_comparison (0.553s)
+  Note  : NOT IMPLEMENTED: SimulationLab.tsx displays vulnerable response, evidence, and Remediation Fix text, without an interactive secure-endpoint execution comparison toggle.
+[PASS] tests.test_reports :: test_reports_generate_and_download_pdf (1.73s)
+[PASS] tests.test_logout :: test_logout_redirects_and_blocks_protected_routes (0.949s)
