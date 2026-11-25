@@ -5,7 +5,8 @@ import {
   createApi,
   updateApi,
   deleteApi,
-  importOpenApi
+  importOpenApi,
+  exportApiAsPostman
 } from '../controllers/apiController';
 import { authenticate } from '../middleware/auth';
 
@@ -17,6 +18,7 @@ router.get('/', listApis);
 router.post('/', createApi);
 router.post('/import-openapi', importOpenApi);
 router.get('/:id', getApiById);
+router.get('/:id/postman', exportApiAsPostman);
 router.put('/:id', updateApi);
 router.delete('/:id', deleteApi);
 

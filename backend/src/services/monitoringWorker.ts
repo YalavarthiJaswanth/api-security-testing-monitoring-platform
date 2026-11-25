@@ -1,6 +1,7 @@
 import { MonitoringConfig, IMonitoringConfig } from '../models/Monitoring';
 import { Api } from '../models/Api';
 import { executeRealRequest } from './apiTester';
+import { webhookService } from './webhookService';
 
 class MonitoringWorker {
   private timer: NodeJS.Timeout | null = null;
@@ -80,6 +81,7 @@ class MonitoringWorker {
       const sumLatency = config.history.reduce((acc, c) => acc + c.responseTimeMs, 0);
       const avgLatency = totalChecks > 0 ? Math.round(sumLatency / totalChecks) : 0;
 
+      const previousStatus = config.currentStatus;
       let currentStatus: 'healthy' | 'degraded' | 'down' = 'healthy';
       if (!isHealthy || res.status >= 500) {
         currentStatus = 'down';
@@ -93,6 +95,32 @@ class MonitoringWorker {
       config.averageResponseTimeMs = avgLatency;
 
       await config.save();
+
+      // Dispatch Webhook Alerts on State Changes
+      if ((currentStatus === 'down' || currentStatus === 'degraded') && previousStatus === 'healthy') {
+        webhookService.dispatchWebhookEvent('monitoring.alert', {
+          apiId: api._id,
+          apiName: api.name,
+          targetUrl: fullUrl,
+          status: currentStatus,
+          previousStatus,
+          responseTimeMs,
+          statusCode: res.status,
+          errorMessage: newCheck.errorMessage,
+          timestamp: new Date().toISOString()
+        }, config.createdBy?.toString());
+      } else if (currentStatus === 'healthy' && (previousStatus === 'down' || previousStatus === 'degraded')) {
+        webhookService.dispatchWebhookEvent('monitoring.recovered', {
+          apiId: api._id,
+          apiName: api.name,
+          targetUrl: fullUrl,
+          status: currentStatus,
+          previousStatus,
+          responseTimeMs,
+          uptimePercentage,
+          timestamp: new Date().toISOString()
+        }, config.createdBy?.toString());
+      }
       return config;
     } catch (err: any) {
       console.error(`[Monitoring Worker] Error monitoring API ${config.apiId}:`, err.message);

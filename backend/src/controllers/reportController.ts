@@ -5,6 +5,8 @@ import { Finding } from '../models/Finding';
 import { Api } from '../models/Api';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { postmanService } from '../services/postmanService';
+import { swaggerSpec } from '../config/swagger';
 
 export async function exportJsonReport(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
@@ -128,5 +130,56 @@ export async function exportPdfReport(req: AuthenticatedRequest, res: Response):
     res.send(pdfBuffer);
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message || 'Failed to generate PDF report' });
+  }
+}
+
+/**
+ * Export Platform Postman Collection v2.1.0
+ */
+export async function exportPostmanReport(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const protocol = req.protocol;
+    const host = req.get('host') || 'localhost:5001';
+    const baseUrl = `${protocol}://${host}`;
+
+    const collection = postmanService.generatePlatformCollection(baseUrl);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename=API_Sentinel.postman_collection.json');
+    res.json(collection);
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to export Postman collection' });
+  }
+}
+
+/**
+ * Export Platform Postman Environment
+ */
+export async function exportPostmanEnvironment(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const protocol = req.protocol;
+    const host = req.get('host') || 'localhost:5001';
+    const baseUrl = `${protocol}://${host}`;
+
+    const env = postmanService.generatePlatformEnvironment(baseUrl);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename=API_Sentinel.postman_environment.json');
+    res.json(env);
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to export Postman environment' });
+  }
+}
+
+/**
+ * Export Platform OpenAPI 3.0 Specification
+ */
+export async function exportOpenApiReport(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename=api-sentinel-openapi.json');
+    res.json(swaggerSpec);
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to export OpenAPI specification' });
   }
 }

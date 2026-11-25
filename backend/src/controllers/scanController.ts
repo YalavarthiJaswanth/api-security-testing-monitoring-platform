@@ -5,6 +5,7 @@ import { Scan } from '../models/Scan';
 import { Finding } from '../models/Finding';
 import { config } from '../config/env';
 import { decryptCredentials } from '../utils/crypto';
+import { webhookService } from '../services/webhookService';
 import axios from 'axios';
 
 export async function triggerScan(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -132,6 +133,44 @@ export async function triggerScan(req: AuthenticatedRequest, res: Response): Pro
     scan.logs.push(`Scan finished in ${durationMs}ms with ${createdFindings.length} findings recorded.`);
     await scan.save();
 
+    // Dispatch webhook notifications asynchronously
+    webhookService.dispatchWebhookEvent('scan.completed', {
+      scanId: scan._id,
+      apiId: api._id,
+      apiName: api.name,
+      targetBaseUrl: api.baseUrl,
+      scanType: scan.scanType,
+      status: scan.status,
+      durationMs: scan.durationMs,
+      findingsCount: createdFindings.length,
+      severityCounts: scan.severityCounts,
+      timestamp: new Date().toISOString()
+    }, req.user!._id.toString());
+
+    // If critical or high findings were detected, also dispatch finding.detected
+    const criticalOrHigh = createdFindings.filter(
+      (f) => f.severity === 'critical' || f.severity === 'high'
+    );
+    if (criticalOrHigh.length > 0) {
+      webhookService.dispatchWebhookEvent('finding.detected', {
+        scanId: scan._id,
+        apiId: api._id,
+        apiName: api.name,
+        targetBaseUrl: api.baseUrl,
+        criticalCount: severityCounts.critical,
+        highCount: severityCounts.high,
+        findings: criticalOrHigh.map((f) => ({
+          id: f._id,
+          title: f.title,
+          severity: f.severity,
+          owaspCategory: f.owaspCategory,
+          endpoint: f.endpoint,
+          method: f.method
+        })),
+        timestamp: new Date().toISOString()
+      }, req.user!._id.toString());
+    }
+
     res.status(201).json({
       success: true,
       message: 'Scan completed successfully',
@@ -139,6 +178,13 @@ export async function triggerScan(req: AuthenticatedRequest, res: Response): Pro
       findings: createdFindings
     });
   } catch (err: any) {
+    if (req.user?._id) {
+      webhookService.dispatchWebhookEvent('scan.failed', {
+        apiId: req.body?.apiId,
+        error: err.message || 'Scan execution failed',
+        timestamp: new Date().toISOString()
+      }, req.user._id.toString());
+    }
     res.status(500).json({ success: false, message: err.message || 'Scan execution failed' });
   }
 }

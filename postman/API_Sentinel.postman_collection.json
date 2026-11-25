@@ -1,0 +1,804 @@
+{
+  "info": {
+    "name": "API Sentinel - Security Testing & Monitoring Platform API",
+    "description": "Complete Postman API Collection for API Sentinel Backend microservice, testing engine, monitoring, and webhooks.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "apiId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "scanId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "findingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "webhookId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Health & Status",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Verify system uptime, database status, and health."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"security_lead\",\n  \"email\": \"lead@apisentinel.local\",\n  \"password\": \"SuperSecurePassword2026!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login User (Auto-sets Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.environment.set(\"jwt_token\", jsonData.token);",
+                  "    pm.collectionVariables.set(\"jwt_token\", jsonData.token);",
+                  "    console.log(\"JWT token stored in environment variable jwt_token\");",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"lead@apisentinel.local\",\n  \"password\": \"SuperSecurePassword2026!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Current Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. API Inventory Management",
+      "item": [
+        {
+          "name": "List Registered APIs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/apis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "apis"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Register Target API",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.api && jsonData.api.id) {",
+                  "    pm.environment.set(\"apiId\", jsonData.api.id);",
+                  "    pm.collectionVariables.set(\"apiId\", jsonData.api.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Payment Service API\",\n  \"baseUrl\": \"http://localhost:5050\",\n  \"description\": \"Core payment processing REST API\",\n  \"environment\": \"development\",\n  \"authType\": \"bearer\",\n  \"credentials\": {\n    \"token\": \"sentinel-test-token-2026\"\n  },\n  \"isLabApi\": true,\n  \"endpoints\": [\n    {\n      \"path\": \"/api/v1/users\",\n      \"method\": \"GET\",\n      \"summary\": \"List users\",\n      \"authRequired\": true\n    },\n    {\n      \"path\": \"/api/v1/transfer\",\n      \"method\": \"POST\",\n      \"summary\": \"Funds transfer\",\n      \"authRequired\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/apis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "apis"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get API Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/apis/{{apiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "apis",
+                "{{apiId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export API as Postman Collection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/apis/{{apiId}}/postman",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "apis",
+                "{{apiId}}",
+                "postman"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Import OpenAPI / Swagger Spec",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"specContent\": \"openapi: \\\"3.0.0\\\"\\ninfo:\\n  title: Sample API\\n  version: 1.0.0\\npaths:\\n  /users:\\n    get:\\n      summary: Get users\\n      responses:\\n        \\\"200\\\":\\n          description: OK\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/apis/import-openapi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "apis",
+                "import-openapi"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Interactive API Testing Proxy",
+      "item": [
+        {
+          "name": "Send Real Request via SSRF Safe Proxy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"http://localhost:5050/api/v1/users\",\n  \"method\": \"GET\",\n  \"headers\": {\n    \"Accept\": \"application/json\"\n  },\n  \"allowLocalLab\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/test/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "test",
+                "request"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Security Scans",
+      "item": [
+        {
+          "name": "Trigger OWASP Security Scan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.scan && jsonData.scan._id) {",
+                  "    pm.environment.set(\"scanId\", jsonData.scan._id);",
+                  "    pm.collectionVariables.set(\"scanId\", jsonData.scan._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiId\": \"{{apiId}}\",\n  \"scanType\": \"full_owasp\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scans/trigger",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scans",
+                "trigger"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Scans History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scans"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Scan Details & Log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/scans/{{scanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "scans",
+                "{{scanId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Vulnerability Findings",
+      "item": [
+        {
+          "name": "List Security Findings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/findings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "findings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Finding Remediation Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"mitigated\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/findings/{{findingId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "findings",
+                "{{findingId}}",
+                "status"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Continuous Monitoring",
+      "item": [
+        {
+          "name": "List Monitoring Configurations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/monitoring",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "monitoring"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Trigger Immediate Health Check",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/monitoring/{{apiId}}/trigger",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "monitoring",
+                "{{apiId}}",
+                "trigger"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Webhooks & Alerting",
+      "item": [
+        {
+          "name": "List Registered Webhooks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/webhooks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "webhooks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Webhook Endpoint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.webhook && jsonData.webhook.id) {",
+                  "    pm.environment.set(\"webhookId\", jsonData.webhook.id);",
+                  "    pm.collectionVariables.set(\"webhookId\", jsonData.webhook.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Security Incident Slack Webhook\",\n  \"url\": \"https://webhook.site/test-endpoint\",\n  \"events\": [\n    \"scan.completed\",\n    \"finding.detected\",\n    \"monitoring.alert\"\n  ],\n  \"isActive\": true,\n  \"customHeaders\": {\n    \"X-Custom-Auth\": \"Bearer test-token\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/webhooks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "webhooks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Test Webhook (Send Ping Event)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/webhooks/{{webhookId}}/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "webhooks",
+                "{{webhookId}}",
+                "test"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Webhook Details & Delivery History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/webhooks/{{webhookId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "webhooks",
+                "{{webhookId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Webhook",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/webhooks/{{webhookId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "webhooks",
+                "{{webhookId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Reports & Exports",
+      "item": [
+        {
+          "name": "Export Platform Postman Collection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/postman",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "postman"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Platform Postman Environment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/postman-environment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "postman-environment"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Platform OpenAPI Specification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/openapi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "openapi"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download PDF Audit Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reports/pdf/{{scanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "pdf",
+                "{{scanId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Simulation Lab",
+      "item": [
+        {
+          "name": "Get Simulation Scenarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/simulation/scenarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "simulation",
+                "scenarios"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Trigger Simulation Attack",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"intensity\": \"standard\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/simulation/trigger/bola",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "simulation",
+                "trigger",
+                "bola"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Settings & Platform Config",
+      "item": [
+        {
+          "name": "Get System Settings & SSRF Policy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "settings"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

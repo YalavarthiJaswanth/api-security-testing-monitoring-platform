@@ -177,6 +177,44 @@ npm start
 
 ---
 
+## 🚀 Swagger, Postman, Webhooks & HTTPS Support
+
+API Sentinel includes enterprise developer and security integration tools:
+
+### 1. 📖 Swagger / OpenAPI Documentation
+- **Interactive Swagger UI:** Accessible directly at [`http://localhost:5001/api-docs`](http://localhost:5001/api-docs) (or [`https://localhost:5443/api-docs`](https://localhost:5443/api-docs) when HTTPS is enabled), with interactive API exploring and testing.
+- **Alternative path:** [`http://localhost:5001/swagger`](http://localhost:5001/swagger)
+- **Raw OpenAPI 3.0.3 Spec:** Available at [`http://localhost:5001/api-docs.json`](http://localhost:5001/api-docs.json) or [`http://localhost:5001/api/v1/reports/openapi`](http://localhost:5001/api/v1/reports/openapi).
+
+### 2. 📮 Postman Collection & Environment
+- **Platform Collection:** Pre-packaged Postman Collection v2.1.0 located at [`postman/API_Sentinel.postman_collection.json`](./postman/API_Sentinel.postman_collection.json) and [`docs/postman/API_Sentinel.postman_collection.json`](./docs/postman/API_Sentinel.postman_collection.json).
+- **Platform Environment:** Pre-configured environment file at [`postman/API_Sentinel.postman_environment.json`](./postman/API_Sentinel.postman_environment.json) with auto-token capture on login.
+- **Dynamic Exports via API:**
+  - `GET /api/v1/reports/postman`: Downloads the platform Postman collection JSON.
+  - `GET /api/v1/reports/postman-environment`: Downloads the Postman environment JSON.
+  - `GET /api/v1/apis/:id/postman`: Generates a customized Postman collection for any specific registered target API and its endpoints.
+
+### 3. 🔔 Webhooks & Real-Time Alerting
+- **Webhook Management:** Register notification endpoints at `POST /api/v1/webhooks` with custom headers and event subscriptions.
+- **Supported Security Events:**
+  - `scan.completed`: Triggered upon scan finalization with severity counts and summary.
+  - `scan.failed`: Triggered if a scan encounters an unrecoverable error.
+  - `finding.detected`: Fired immediately when High or Critical vulnerabilities are uncovered.
+  - `monitoring.alert`: Fired when a monitored API transitions to Degraded or Down status.
+  - `monitoring.recovered`: Fired when an API returns to Healthy status.
+- **HMAC-SHA256 Signatures:** Every delivery contains an `X-Sentinel-Signature` header (`sha256=<hmac>`) computed with the webhook secret for cryptographic verification.
+- **Testing & Logs:** Test ping endpoints at `POST /api/v1/webhooks/:id/test` with delivery logs stored in MongoDB.
+
+### 4. 🔒 HTTPS & SSL/TLS Encryption
+- **Dual HTTP & HTTPS Support:** Backend can run dual HTTP (port 5001) and HTTPS (port 5443).
+- **Auto-Certificate Generation:** When `HTTPS_ENABLED=true`, a valid self-signed 2048-bit RSA certificate and private key are automatically generated and cached to `certs/server.key` and `certs/server.crt`.
+- **Custom Certificates:** Production certificates can be specified via `SSL_KEY_PATH` and `SSL_CERT_PATH`.
+- **Certificate Utility Scripts:**
+  - Windows: `powershell -ExecutionPolicy Bypass -File scripts/generate-certs.ps1`
+  - Linux/macOS: `bash scripts/generate-certs.sh`
+
+---
+
 ## 🔒 Security & Safe Testing Notice
 
 API Sentinel implements strict target filtering. By default:

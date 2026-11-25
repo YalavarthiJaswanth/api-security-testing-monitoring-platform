@@ -7,6 +7,7 @@ import { Finding } from '../models/Finding';
 import { encryptCredentials } from '../utils/crypto';
 import { validateTargetUrl } from '../utils/ssrf';
 import { parseOpenApiSpec } from '../services/openapiParser';
+import { postmanService } from '../services/postmanService';
 import axios from 'axios';
 
 export async function listApis(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -268,5 +269,23 @@ export async function importOpenApi(req: AuthenticatedRequest, res: Response): P
     });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message || 'Failed to parse OpenAPI specification' });
+  }
+}
+
+export async function exportApiAsPostman(req: AuthenticatedRequest, res: Response): Promise<void> {
+  try {
+    const api = await Api.findOne({ _id: req.params.id, createdBy: req.user!._id });
+    if (!api) {
+      res.status(404).json({ success: false, message: 'API not found' });
+      return;
+    }
+
+    const collection = postmanService.generateApiCollection(api);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${api.name.replace(/[^a-zA-Z0-9_-]/g, '_')}_postman_collection.json"`);
+    res.json(collection);
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to export API as Postman collection' });
   }
 }

@@ -13,5 +13,10 @@ export const config = {
   vulnerableLabUrl: process.env.VULNERABLE_LAB_URL || 'http://localhost:5050',
   ssrfStrict: process.env.SSRF_STRICT !== 'false',
   allowedHosts: (process.env.ALLOWED_HOSTS || 'localhost,127.0.0.1,host.docker.internal,vulnerable-lab').split(','),
-  monitoringIntervalDefault: 5 // minutes
+  monitoringIntervalDefault: 5, // minutes
+  // HTTPS & TLS Configuration
+  httpsEnabled: process.env.HTTPS_ENABLED === 'true',
+  httpsPort: parseInt(process.env.HTTPS_PORT || '5443', 10),
+  sslKeyPath: process.env.SSL_KEY_PATH,
+  sslCertPath: process.env.SSL_CERT_PATH
 };

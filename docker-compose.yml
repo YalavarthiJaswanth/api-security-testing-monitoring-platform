@@ -73,8 +73,11 @@ services:
     restart: unless-stopped
     ports:
       - "5001:5001"
+      - "5443:5443"
     environment:
       - PORT=5001
+      - HTTPS_ENABLED=true
+      - HTTPS_PORT=5443
       - NODE_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/api_sentinel
       - JWT_SECRET=api-sentinel-jwt-super-secret-key-production-strength-2026
@@ -83,6 +86,8 @@ services:
       - VULNERABLE_LAB_URL=http://vulnerable-lab:5050
       - SSRF_STRICT=true
       - ALLOWED_HOSTS=localhost,127.0.0.1,host.docker.internal,vulnerable-lab
+    volumes:
+      - ./certs:/app/certs
     depends_on:
       mongodb:
         condition: service_healthy

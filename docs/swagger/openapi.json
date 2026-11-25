@@ -1,0 +1,1301 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API Sentinel - Security Testing & Monitoring Platform API",
+    "version": "1.0.0",
+    "description": "Enterprise-grade API Security Testing & Continuous Monitoring Platform.\n    \nFeatures:\n- Automated OWASP API Security Top 10 (2023) vulnerability scanning\n- Continuous latency & uptime health monitoring with alert thresholds\n- Cryptographic credential management (AES-256-GCM)\n- SSRF-protected interactive API testing proxy\n- Webhook alert notifications with HMAC-SHA256 signatures\n- Dynamic Postman collection exports & OpenAPI 3.0 spec import/export\n- Isolated Vulnerable Lab & attack simulation environment",
+    "contact": {
+      "name": "API Sentinel Security Team",
+      "url": "https://github.com/apisentinel/platform"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5001",
+      "description": "Local Development Server (HTTP)"
+    },
+    {
+      "url": "https://localhost:5443",
+      "description": "Local Secure Server (HTTPS)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter your JWT token obtained from /api/v1/auth/login"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "analyst",
+              "auditor"
+            ]
+          }
+        }
+      },
+      "ApiEndpoint": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "example": "/api/v1/users"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "DELETE",
+              "PATCH",
+              "OPTIONS",
+              "HEAD"
+            ],
+            "example": "GET"
+          },
+          "summary": {
+            "type": "string",
+            "example": "List all users"
+          },
+          "authRequired": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "ApiTarget": {
+        "type": "object",
+        "required": [
+          "name",
+          "baseUrl"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Customer Management API"
+          },
+          "baseUrl": {
+            "type": "string",
+            "example": "https://api.example.com"
+          },
+          "description": {
+            "type": "string",
+            "example": "Production microservice for customers"
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "development",
+              "staging",
+              "production"
+            ],
+            "example": "production"
+          },
+          "authType": {
+            "type": "string",
+            "enum": [
+              "none",
+              "bearer",
+              "apiKey",
+              "basic"
+            ],
+            "example": "bearer"
+          },
+          "endpointCount": {
+            "type": "integer",
+            "example": 12
+          },
+          "isLabApi": {
+            "type": "boolean",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Scan": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "apiId": {
+            "type": "string"
+          },
+          "scanType": {
+            "type": "string",
+            "enum": [
+              "full_owasp",
+              "quick_audit",
+              "auth_only",
+              "rate_limit"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "running",
+              "completed",
+              "failed"
+            ]
+          },
+          "durationMs": {
+            "type": "number"
+          },
+          "findingsCount": {
+            "type": "integer"
+          },
+          "severityCounts": {
+            "type": "object",
+            "properties": {
+              "critical": {
+                "type": "integer"
+              },
+              "high": {
+                "type": "integer"
+              },
+              "medium": {
+                "type": "integer"
+              },
+              "low": {
+                "type": "integer"
+              },
+              "informational": {
+                "type": "integer"
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Finding": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "scanId": {
+            "type": "string"
+          },
+          "apiId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "example": "Broken Object Level Authorization (BOLA)"
+          },
+          "owaspCategory": {
+            "type": "string",
+            "example": "API1:2023 - Broken Object Level Authorization"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "informational"
+            ]
+          },
+          "endpoint": {
+            "type": "string",
+            "example": "/api/v1/orders/102"
+          },
+          "method": {
+            "type": "string",
+            "example": "GET"
+          },
+          "evidence": {
+            "type": "object"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "remediation": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_review",
+              "mitigated",
+              "false_positive"
+            ]
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "required": [
+          "name",
+          "url"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Slack Security Alerts"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://hooks.slack.com/services/..."
+          },
+          "secret": {
+            "type": "string",
+            "example": "whsec_7493a8d8e0e..."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "scan.completed",
+                "scan.failed",
+                "finding.detected",
+                "monitoring.alert",
+                "monitoring.recovered",
+                "*"
+              ]
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "customHeaders": {
+            "type": "object"
+          },
+          "failureCount": {
+            "type": "integer",
+            "example": 0
+          },
+          "lastTriggered": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastStatus": {
+            "type": "integer",
+            "example": 200
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "message": {
+            "type": "string",
+            "example": "Error description"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "System Health & Uptime Check",
+        "tags": [
+          "Health"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Backend service and database status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "healthy"
+                    },
+                    "service": {
+                      "type": "string",
+                      "example": "api-sentinel-backend"
+                    },
+                    "uptimeSeconds": {
+                      "type": "integer"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    },
+                    "database": {
+                      "type": "string",
+                      "example": "connected"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "summary": "Register a new auditor or analyst account",
+        "tags": [
+          "Authentication"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "analyst_bob"
+                  },
+                  "email": {
+                    "type": "string",
+                    "example": "bob@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "SecPass2026!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration successful"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Authenticate and receive JWT token",
+        "tags": [
+          "Authentication"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "lead@apisentinel.local"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "SuperSecurePassword2026!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "token": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "summary": "Get currently authenticated user identity",
+        "tags": [
+          "Authentication"
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile returned"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/apis": {
+      "get": {
+        "summary": "List all monitored API targets",
+        "tags": [
+          "API Management"
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of API targets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "apis": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ApiTarget"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a new target API for security scanning",
+        "tags": [
+          "API Management"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "baseUrl"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "baseUrl": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "environment": {
+                    "type": "string"
+                  },
+                  "authType": {
+                    "type": "string"
+                  },
+                  "credentials": {
+                    "type": "object"
+                  },
+                  "endpoints": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ApiEndpoint"
+                    }
+                  },
+                  "openapiSpec": {
+                    "type": "string"
+                  },
+                  "isLabApi": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API registered"
+          },
+          "400": {
+            "description": "Invalid target URL or SSRF violation"
+          }
+        }
+      }
+    },
+    "/api/v1/apis/{id}": {
+      "get": {
+        "summary": "Get target API by ID",
+        "tags": [
+          "API Management"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "API target details"
+          },
+          "404": {
+            "description": "API not found"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update target API configuration",
+        "tags": [
+          "API Management"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated successfully"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete target API and its associated scans/findings",
+        "tags": [
+          "API Management"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted successfully"
+          }
+        }
+      }
+    },
+    "/api/v1/apis/{id}/postman": {
+      "get": {
+        "summary": "Export API target endpoints as a Postman Collection (v2.1)",
+        "tags": [
+          "API Management",
+          "Postman"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Postman Collection JSON",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/apis/import-openapi": {
+      "post": {
+        "summary": "Parse and import OpenAPI / Swagger specification",
+        "tags": [
+          "API Management",
+          "Swagger"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "specContent": {
+                    "type": "string",
+                    "description": "Raw JSON or YAML OpenAPI spec"
+                  },
+                  "specUrl": {
+                    "type": "string",
+                    "description": "Remote URL to fetch OpenAPI spec from"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Parsed endpoints list"
+          },
+          "400": {
+            "description": "Parse error or SSRF blocked"
+          }
+        }
+      }
+    },
+    "/api/v1/test/request": {
+      "post": {
+        "summary": "Execute real HTTP request via SSRF-safe interactive proxy",
+        "tags": [
+          "Interactive Testing"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "method"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "DELETE",
+                      "PATCH",
+                      "OPTIONS",
+                      "HEAD"
+                    ]
+                  },
+                  "headers": {
+                    "type": "object"
+                  },
+                  "body": {
+                    "type": "string"
+                  },
+                  "timeout": {
+                    "type": "integer"
+                  },
+                  "allowLocalLab": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Live HTTP response with status, latency, headers, and body"
+          },
+          "400": {
+            "description": "SSRF blocked"
+          }
+        }
+      }
+    },
+    "/api/v1/scans": {
+      "get": {
+        "summary": "List historical security scans",
+        "tags": [
+          "Security Scans"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of scans"
+          }
+        }
+      }
+    },
+    "/api/v1/scans/trigger": {
+      "post": {
+        "summary": "Trigger OWASP API Security testing scan",
+        "tags": [
+          "Security Scans"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "apiId"
+                ],
+                "properties": {
+                  "apiId": {
+                    "type": "string"
+                  },
+                  "scanType": {
+                    "type": "string",
+                    "enum": [
+                      "full_owasp",
+                      "quick_audit",
+                      "auth_only",
+                      "rate_limit"
+                    ],
+                    "default": "full_owasp"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Scan completed and findings saved"
+          }
+        }
+      }
+    },
+    "/api/v1/scans/{id}": {
+      "get": {
+        "summary": "Get scan details, severity counts, and execution logs",
+        "tags": [
+          "Security Scans"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scan details"
+          }
+        }
+      }
+    },
+    "/api/v1/findings": {
+      "get": {
+        "summary": "Query security findings with severity & status filters",
+        "tags": [
+          "Vulnerability Findings"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "severity",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "apiId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching findings list"
+          }
+        }
+      }
+    },
+    "/api/v1/findings/{id}/status": {
+      "patch": {
+        "summary": "Update finding remediation status (mitigated, open, false_positive)",
+        "tags": [
+          "Vulnerability Findings"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "in_review",
+                      "mitigated",
+                      "false_positive"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Finding status updated"
+          }
+        }
+      }
+    },
+    "/api/v1/monitoring": {
+      "get": {
+        "summary": "List active continuous monitoring configurations",
+        "tags": [
+          "Monitoring"
+        ],
+        "responses": {
+          "200": {
+            "description": "Monitoring configs"
+          }
+        }
+      }
+    },
+    "/api/v1/monitoring/{id}/trigger": {
+      "post": {
+        "summary": "Trigger immediate health and latency check",
+        "tags": [
+          "Monitoring"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Health check completed"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/stats": {
+      "get": {
+        "summary": "Get consolidated executive SOC metrics and risk score",
+        "tags": [
+          "Dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard stats"
+          }
+        }
+      }
+    },
+    "/api/v1/reports/pdf": {
+      "get": {
+        "summary": "Generate formal PDF audit report",
+        "tags": [
+          "Reports"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scanId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF binary stream"
+          }
+        }
+      }
+    },
+    "/api/v1/reports/postman": {
+      "get": {
+        "summary": "Export complete platform Postman Collection (v2.1.0)",
+        "tags": [
+          "Reports",
+          "Postman"
+        ],
+        "responses": {
+          "200": {
+            "description": "Postman Collection JSON",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/postman-environment": {
+      "get": {
+        "summary": "Export Postman Environment with templated variables",
+        "tags": [
+          "Reports",
+          "Postman"
+        ],
+        "responses": {
+          "200": {
+            "description": "Postman Environment JSON",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/openapi": {
+      "get": {
+        "summary": "Export complete platform OpenAPI 3.0 specification JSON",
+        "tags": [
+          "Reports",
+          "Swagger"
+        ],
+        "responses": {
+          "200": {
+            "description": "OpenAPI Specification JSON",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks": {
+      "get": {
+        "summary": "List registered alerting webhooks",
+        "tags": [
+          "Webhooks"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "webhooks": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Webhook"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new alerting webhook destination with HMAC signature secret",
+        "tags": [
+          "Webhooks"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "url"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "SecOps Incident Webhook"
+                  },
+                  "url": {
+                    "type": "string",
+                    "example": "https://hooks.example.com/alerts"
+                  },
+                  "secret": {
+                    "type": "string",
+                    "description": "Optional custom HMAC secret (auto-generated if omitted)"
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "scan.completed",
+                        "scan.failed",
+                        "finding.detected",
+                        "monitoring.alert",
+                        "monitoring.recovered",
+                        "*"
+                      ]
+                    }
+                  },
+                  "isActive": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "customHeaders": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Webhook created"
+          },
+          "400": {
+            "description": "Validation or SSRF error"
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/{id}": {
+      "get": {
+        "summary": "Get webhook by ID with delivery history log",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook details and delivery logs"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update webhook configuration",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete webhook endpoint",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook deleted"
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/{id}/test": {
+      "post": {
+        "summary": "Send test ping event to verify webhook delivery and signature",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delivery result with latency and HTTP status"
+          }
+        }
+      }
+    },
+    "/api/v1/simulation/scenarios": {
+      "get": {
+        "summary": "List available OWASP API vulnerability simulation scenarios",
+        "tags": [
+          "Simulation Lab"
+        ],
+        "responses": {
+          "200": {
+            "description": "Available scenarios"
+          }
+        }
+      }
+    },
+    "/api/v1/simulation/trigger/{id}": {
+      "post": {
+        "summary": "Trigger simulated exploit against Vulnerable Lab",
+        "tags": [
+          "Simulation Lab"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Simulation result"
+          }
+        }
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "summary": "Get platform environment and SSRF security configurations",
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "System settings"
+          }
+        }
+      }
+    }
+  }
+}
