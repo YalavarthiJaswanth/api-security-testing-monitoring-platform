@@ -5,7 +5,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import mongoose from 'mongoose';
-import swaggerUi from 'swagger-ui-express';
 import { config } from './config/env';
 import { swaggerSpec } from './config/swagger';
 import { errorHandler } from './middleware/errorHandler';
@@ -106,13 +105,19 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Swagger / OpenAPI UI and Specification Endpoints
+// Swagger / OpenAPI UI and Specification Endpoints (guarded for serverless asset bundling)
 const swaggerOptions = {
   explorer: true,
   customSiteTitle: 'API Sentinel - OpenAPI Documentation & Explorer'
 };
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
-app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const swaggerUi = require('swagger-ui-express');
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
+  app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
+} catch (swaggerErr: any) {
+  console.warn('[Swagger UI Warning] Interactive UI unavailable in this runtime:', swaggerErr?.message);
+}
 app.get('/api-docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.json(swaggerSpec);
@@ -208,3 +213,14 @@ if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
 }
 
 export default app;
+
+// Expose callable Express app for both CommonJS (module.exports) and ESM default loaders on Vercel
+Object.defineProperty(app, '__esModule', { value: true });
+Object.assign(app, {
+  default: app,
+  ensureDatabaseConnected,
+  startServer
+});
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = app;
+}
