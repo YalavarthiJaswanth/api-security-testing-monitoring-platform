@@ -32,13 +32,14 @@ describe('Security Reporting Unit Tests (PDF & JSON)', () => {
         remediation: 'Check ownership.'
       }
     ];
-    const sampleScan = { _id: 'scan-1', scanType: 'full_owasp', status: 'completed' };
+    const scanId = '507f1f77bcf86cd799439031';
+    const sampleScan = { _id: scanId, scanType: 'full_owasp', status: 'completed' };
 
     Finding.find = () => ({ populate: async () => sampleFindings });
     Scan.findById = async () => sampleScan;
 
     const req = createMockReq({
-      query: { scanId: 'scan-1' },
+      query: { scanId },
       user: { _id: 'u1', username: 'auditor_jane' }
     });
     const res = createMockRes();

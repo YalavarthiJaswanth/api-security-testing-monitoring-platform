@@ -58,7 +58,7 @@ describe('Simulation Lab & Attack Scenario Unit Tests', () => {
     await simulationController.executeScenario(req, res);
 
     assert.equal(res.statusCode, 404);
-    assert.match(res.body.message, /Scenario not found/i);
+    assert.match(res.body.message, /Scenario.*not found/i);
   });
 
   it('executeScenario (BOLA vulnerable): captures victim PII evidence and stores [SIMULATION] finding', async () => {

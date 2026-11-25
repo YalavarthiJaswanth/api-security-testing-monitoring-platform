@@ -1,6 +1,6 @@
 {
   "project_name": "API Security Testing & Monitoring Platform (API Sentinel)",
-  "executed_at": "2026-11-25T17:49:55.344131+05:30",
+  "executed_at": "2026-11-25T17:59:37.236071+05:30",
   "original_project_path": "/Users/michael/.gemini/antigravity/scratch/api-security-testing-monitoring-platform",
   "test_package_path": "/Users/michael/.gemini/antigravity/scratch/api-security-testing-monitoring-platform/API_SENTINEL_UNIT_TESTS",
   "overall_status": "PASSED",
@@ -10,7 +10,7 @@
     "failed_tests": 0,
     "skipped_tests": 0,
     "pass_percentage": 100.0,
-    "total_duration_seconds": 3.81
+    "total_duration_seconds": 2.831
   },
   "suites": [
     {
@@ -28,7 +28,7 @@
       "failed": 0,
       "skipped": 0,
       "pass_percentage": 100.0,
-      "duration_seconds": 1.357,
+      "duration_seconds": 0.87,
       "exit_code": 0,
       "failures": [],
       "status": "PASSED"
@@ -55,7 +55,7 @@
       "failed": 0,
       "skipped": 0,
       "pass_percentage": 100.0,
-      "duration_seconds": 0.401,
+      "duration_seconds": 0.319,
       "exit_code": 0,
       "failures": [],
       "status": "PASSED"
@@ -81,7 +81,7 @@
       "failed": 0,
       "skipped": 0,
       "pass_percentage": 100.0,
-      "duration_seconds": 0.697,
+      "duration_seconds": 0.679,
       "exit_code": 0,
       "failures": [],
       "status": "PASSED"
@@ -101,7 +101,7 @@
       "failed": 0,
       "skipped": 0,
       "pass_percentage": 100.0,
-      "duration_seconds": 0.351,
+      "duration_seconds": 0.32,
       "exit_code": 0,
       "failures": [],
       "status": "PASSED"
@@ -119,7 +119,7 @@
       "failed": 0,
       "skipped": 0,
       "pass_percentage": 100.0,
-      "duration_seconds": 0.314,
+      "duration_seconds": 0.275,
       "exit_code": 0,
       "failures": [],
       "status": "PASSED"
@@ -140,7 +140,7 @@
       "failed": 0,
       "skipped": 0,
       "pass_percentage": 100.0,
-      "duration_seconds": 0.678,
+      "duration_seconds": 0.361,
       "exit_code": 0,
       "failures": [],
       "status": "PASSED"

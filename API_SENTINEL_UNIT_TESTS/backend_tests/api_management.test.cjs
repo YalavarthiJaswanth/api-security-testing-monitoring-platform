@@ -141,8 +141,9 @@ describe('API Management & OpenAPI Parser Unit Tests', () => {
   });
 
   it('listApis & getApiById: retrieve sanitized APIs without exposing encrypted secrets', async () => {
+    const apiId = '507f1f77bcf86cd799439011';
     const fakeDoc = {
-      _id: 'api-1',
+      _id: apiId,
       name: 'Customer API',
       baseUrl: 'https://cust.example.com',
       description: 'Core CRM',
@@ -165,7 +166,7 @@ describe('API Management & OpenAPI Parser Unit Tests', () => {
 
     Api.findOne = async () => fakeDoc;
     const resOne = createMockRes();
-    await apiController.getApiById(createMockReq({ params: { id: 'api-1' }, user: { _id: 'u1' } }), resOne);
+    await apiController.getApiById(createMockReq({ params: { id: apiId }, user: { _id: 'u1' } }), resOne);
 
     assert.equal(resOne.statusCode, 200);
     assert.equal(resOne.body.api.hasAuthCredentials, true);
@@ -183,8 +184,9 @@ describe('API Management & OpenAPI Parser Unit Tests', () => {
     await apiController.updateApi(createMockReq({ params: { id: 'none' }, user: { _id: 'u1' }, body: {} }), resMissing);
     assert.equal(resMissing.statusCode, 404);
 
+    const apiId = '507f1f77bcf86cd799439011';
     const apiDoc = {
-      _id: 'api-1',
+      _id: apiId,
       name: 'Old Name',
       baseUrl: 'https://old.example.com',
       environment: 'development',
@@ -200,7 +202,7 @@ describe('API Management & OpenAPI Parser Unit Tests', () => {
     // SSRF rejection during update
     const resBlocked = createMockRes();
     await apiController.updateApi(
-      createMockReq({ params: { id: 'api-1' }, user: { _id: 'u1' }, body: { baseUrl: 'http://127.0.0.1:8080' } }),
+      createMockReq({ params: { id: apiId }, user: { _id: 'u1' }, body: { baseUrl: 'http://127.0.0.1:8080' } }),
       resBlocked
     );
     assert.equal(resBlocked.statusCode, 400);
@@ -209,7 +211,7 @@ describe('API Management & OpenAPI Parser Unit Tests', () => {
     const resUpdated = createMockRes();
     await apiController.updateApi(
       createMockReq({
-        params: { id: 'api-1' },
+        params: { id: apiId },
         user: { _id: 'u1' },
         body: { name: 'New Name', baseUrl: 'https://new.example.com', environment: 'production' }
       }),
@@ -226,14 +228,15 @@ describe('API Management & OpenAPI Parser Unit Tests', () => {
     await apiController.deleteApi(createMockReq({ params: { id: 'missing' }, user: { _id: 'u1' } }), res404);
     assert.equal(res404.statusCode, 404);
 
+    const apiDelId = '507f1f77bcf86cd799439012';
     const deletedCalls = [];
-    Api.findOneAndDelete = async () => ({ _id: 'api-del-1' });
+    Api.findOneAndDelete = async () => ({ _id: apiDelId });
     Scan.deleteMany = async (q) => deletedCalls.push(['scan', q.apiId]);
     Finding.deleteMany = async (q) => deletedCalls.push(['finding', q.apiId]);
     MonitoringConfig.deleteMany = async (q) => deletedCalls.push(['monitoring', q.apiId]);
 
     const resOk = createMockRes();
-    await apiController.deleteApi(createMockReq({ params: { id: 'api-del-1' }, user: { _id: 'u1' } }), resOk);
+    await apiController.deleteApi(createMockReq({ params: { id: apiDelId }, user: { _id: 'u1' } }), resOk);
 
     assert.equal(resOk.statusCode, 200);
     assert.equal(deletedCalls.length, 3);

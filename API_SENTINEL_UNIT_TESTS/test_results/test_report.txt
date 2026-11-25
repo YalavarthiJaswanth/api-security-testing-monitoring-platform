@@ -1,7 +1,7 @@
 ==============================================================================
 TEST REPORT: API Security Testing & Monitoring Platform (API Sentinel)
 ==============================================================================
-Execution Timestamp : 2026-11-25T17:49:55.344131+05:30
+Execution Timestamp : 2026-11-25T17:59:37.236071+05:30
 Original Project    : /Users/michael/.gemini/antigravity/scratch/api-security-testing-monitoring-platform (READ-ONLY)
 Test Package        : /Users/michael/.gemini/antigravity/scratch/api-security-testing-monitoring-platform/API_SENTINEL_UNIT_TESTS
 Overall Status      : PASSED
@@ -11,7 +11,7 @@ Passed Tests        : 68
 Failed Tests        : 0
 Skipped Tests       : 0
 Pass Percentage     : 100.0%
-Execution Duration  : 3.81s
+Execution Duration  : 2.831s
 ==============================================================================
 
 SUITE BREAKDOWN
@@ -19,36 +19,36 @@ SUITE BREAKDOWN
 Suite          : authentication_tests [PASSED]
   Test Files   : authentication_tests/auth.test.cjs
   Counts       : Total=15 | Passed=15 | Failed=0 | Skipped=0 (100.0%)
-  Duration     : 1.357s
+  Duration     : 0.87s
   Source Scope : backend/src/controllers/authController.ts, backend/src/middleware/auth.ts, backend/src/models/User.ts
 ------------------------------------------------------------------------------
 Suite          : backend_tests [PASSED]
   Test Files   : backend_tests/api_management.test.cjs, backend_tests/api_workspace.test.cjs, backend_tests/simulation_lab.test.cjs, backend_tests/ssrf_and_crypto.test.cjs
   Counts       : Total=25 | Passed=25 | Failed=0 | Skipped=0 (100.0%)
-  Duration     : 0.401s
+  Duration     : 0.319s
   Source Scope : backend/src/controllers/apiController.ts, backend/src/controllers/testController.ts, backend/src/controllers/simulationController.ts, backend/src/services/apiTester.ts, backend/src/services/openapiParser.ts, backend/src/utils/ssrf.ts, backend/src/utils/crypto.ts
 ------------------------------------------------------------------------------
 Suite          : security_engine_tests [PASSED]
   Test Files   : security_engine_tests/test_security_engine.py
   Counts       : Total=10 | Passed=10 | Failed=0 | Skipped=0 (100.0%)
-  Duration     : 0.697s
+  Duration     : 0.679s
   Source Scope : security-engine/app/main.py, security-engine/app/scanner.py, security-engine/app/checks/headers_cors.py, security-engine/app/checks/broken_auth.py, security-engine/app/checks/sensitive_data.py, security-engine/app/checks/resource_consumption.py, security-engine/app/checks/bola.py, security-engine/app/checks/bfla.py, security-engine/app/checks/inventory.py
 ------------------------------------------------------------------------------
 Suite          : monitoring_tests [PASSED]
   Test Files   : monitoring_tests/monitoring.test.cjs
   Counts       : Total=9 | Passed=9 | Failed=0 | Skipped=0 (100.0%)
-  Duration     : 0.351s
+  Duration     : 0.32s
   Source Scope : backend/src/services/monitoringWorker.ts, backend/src/controllers/monitoringController.ts, backend/src/models/Monitoring.ts
 ------------------------------------------------------------------------------
 Suite          : reporting_tests [PASSED]
   Test Files   : reporting_tests/reporting.test.cjs
   Counts       : Total=5 | Passed=5 | Failed=0 | Skipped=0 (100.0%)
-  Duration     : 0.314s
+  Duration     : 0.275s
   Source Scope : backend/src/controllers/reportController.ts
 ------------------------------------------------------------------------------
 Suite          : frontend_tests [PASSED]
   Test Files   : frontend_tests/frontend.test.cjs
   Counts       : Total=4 | Passed=4 | Failed=0 | Skipped=0 (100.0%)
-  Duration     : 0.678s
+  Duration     : 0.361s
   Source Scope : frontend/src/components/SeverityBadge.tsx, frontend/src/components/Header.tsx, frontend/src/components/Sidebar.tsx, frontend/src/services/api.ts
 ------------------------------------------------------------------------------

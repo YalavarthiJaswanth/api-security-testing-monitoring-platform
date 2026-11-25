@@ -201,8 +201,9 @@ describe('Continuous API Monitoring Unit Tests', () => {
   });
 
   it('monitoringController.updateMonitoringConfig: updates interval, threshold, and enabled state', async () => {
+    const monId = '507f1f77bcf86cd799439021';
     const configDoc = {
-      _id: 'mon-1',
+      _id: monId,
       isEnabled: true,
       intervalMinutes: 5,
       latencyThresholdMs: 1000,
@@ -211,7 +212,7 @@ describe('Continuous API Monitoring Unit Tests', () => {
     MonitoringConfig.findOne = async () => configDoc;
 
     const req = createMockReq({
-      params: { id: 'mon-1' },
+      params: { id: monId },
       user: { _id: 'user-1' },
       body: { isEnabled: false, intervalMinutes: 15, latencyThresholdMs: 500 }
     });
@@ -245,11 +246,12 @@ describe('Continuous API Monitoring Unit Tests', () => {
   });
 
   it('monitoringController.triggerManualPing: triggers checkSingleApi and returns updated config', async () => {
-    const configDoc = { _id: 'mon-2', currentStatus: 'unmonitored' };
+    const monId = '507f1f77bcf86cd799439022';
+    const configDoc = { _id: monId, currentStatus: 'unmonitored' };
     MonitoringConfig.findOne = async () => configDoc;
     monitoringWorker.checkSingleApi = async (cfg) => ({ ...cfg, currentStatus: 'healthy', averageResponseTimeMs: 42 });
 
-    const req = createMockReq({ params: { id: 'mon-2' }, user: { _id: 'u1' } });
+    const req = createMockReq({ params: { id: monId }, user: { _id: 'u1' } });
     const res = createMockRes();
 
     await monitoringController.triggerManualPing(req, res);
