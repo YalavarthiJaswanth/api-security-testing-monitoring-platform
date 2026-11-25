@@ -15,7 +15,7 @@ Features:
 - Isolated Vulnerable Lab & attack simulation environment`,
     contact: {
       name: 'API Sentinel Security Team',
-      url: 'https://github.com/apisentinel/platform'
+      url: 'https://github.com/YalavarthiJaswanth/api-security-testing-monitoring-platform'
     },
     license: {
       name: 'MIT'
@@ -47,7 +47,7 @@ Features:
           id: { type: 'string' },
           username: { type: 'string' },
           email: { type: 'string' },
-          role: { type: 'string', enum: ['admin', 'analyst', 'auditor'] }
+          role: { type: 'string', enum: ['admin', 'security_engineer', 'viewer'] }
         }
       },
       ApiEndpoint: {
@@ -110,7 +110,7 @@ Features:
           evidence: { type: 'object' },
           explanation: { type: 'string' },
           remediation: { type: 'string' },
-          status: { type: 'string', enum: ['open', 'in_review', 'mitigated', 'false_positive'] }
+          status: { type: 'string', enum: ['open', 'resolved', 'mitigated', 'in_review', 'false_positive'] }
         }
       },
       Webhook: {
@@ -191,7 +191,8 @@ Features:
                 properties: {
                   username: { type: 'string', example: 'analyst_bob' },
                   email: { type: 'string', example: 'bob@example.com' },
-                  password: { type: 'string', example: 'SecPass2026!' }
+                  password: { type: 'string', example: 'SecPass2026!' },
+                  role: { type: 'string', enum: ['admin', 'security_engineer', 'viewer'], default: 'security_engineer' }
                 }
               }
             }
@@ -199,7 +200,8 @@ Features:
         },
         responses: {
           '201': { description: 'Registration successful' },
-          '400': { description: 'Validation error' }
+          '400': { description: 'Validation error' },
+          '409': { description: 'User already exists' }
         }
       }
     },
@@ -214,9 +216,10 @@ Features:
             'application/json': {
               schema: {
                 type: 'object',
-                required: ['email', 'password'],
+                required: ['password'],
                 properties: {
                   email: { type: 'string', example: 'lead@apisentinel.local' },
+                  emailOrUsername: { type: 'string', example: 'lead@apisentinel.local' },
                   password: { type: 'string', example: 'SuperSecurePassword2026!' }
                 }
               }
@@ -231,7 +234,7 @@ Features:
                 schema: {
                   type: 'object',
                   properties: {
-                    success: { type: 'boolean' },
+                    success: { type: 'boolean', example: true },
                     token: { type: 'string' },
                     user: { $ref: '#/components/schemas/User' }
                   }
@@ -239,6 +242,7 @@ Features:
               }
             }
           },
+          '400': { description: 'Email/username and password required' },
           '401': { description: 'Invalid credentials' }
         }
       }
@@ -286,22 +290,27 @@ Features:
                 type: 'object',
                 required: ['name', 'baseUrl'],
                 properties: {
-                  name: { type: 'string' },
-                  baseUrl: { type: 'string' },
-                  description: { type: 'string' },
-                  environment: { type: 'string' },
-                  authType: { type: 'string' },
-                  credentials: { type: 'object' },
+                  name: { type: 'string', example: 'Online Payments API' },
+                  baseUrl: { type: 'string', example: 'http://localhost:5050' },
+                  description: { type: 'string', example: 'Core financial transactions service' },
+                  environment: { type: 'string', enum: ['development', 'staging', 'production'], default: 'development' },
+                  authType: { type: 'string', enum: ['none', 'bearer', 'apiKey', 'basic'], default: 'none' },
+                  credentials: {
+                    type: 'object',
+                    properties: {
+                      token: { type: 'string', example: 'sample-bearer-token' }
+                    }
+                  },
                   endpoints: { type: 'array', items: { $ref: '#/components/schemas/ApiEndpoint' } },
                   openapiSpec: { type: 'string' },
-                  isLabApi: { type: 'boolean' }
+                  isLabApi: { type: 'boolean', default: false }
                 }
               }
             }
           }
         },
         responses: {
-          '201': { description: 'API registered' },
+          '201': { description: 'API registered successfully' },
           '400': { description: 'Invalid target URL or SSRF violation' }
         }
       }
@@ -320,13 +329,35 @@ Features:
         summary: 'Update target API configuration',
         tags: ['API Management'],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'Updated successfully' } }
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  baseUrl: { type: 'string' },
+                  description: { type: 'string' },
+                  environment: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Updated successfully' },
+          '404': { description: 'API not found' }
+        }
       },
       delete: {
         summary: 'Delete target API and its associated scans/findings',
         tags: ['API Management'],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'Deleted successfully' } }
+        responses: {
+          '200': { description: 'Deleted successfully' },
+          '404': { description: 'API not found' }
+        }
       }
     },
     '/api/v1/apis/{id}/postman': {
@@ -338,7 +369,8 @@ Features:
           '200': {
             description: 'Postman Collection JSON',
             content: { 'application/json': {} }
-          }
+          },
+          '404': { description: 'API not found' }
         }
       }
     },
@@ -353,8 +385,11 @@ Features:
               schema: {
                 type: 'object',
                 properties: {
-                  specContent: { type: 'string', description: 'Raw JSON or YAML OpenAPI spec' },
-                  specUrl: { type: 'string', description: 'Remote URL to fetch OpenAPI spec from' }
+                  specContent: {
+                    type: 'string',
+                    example: 'openapi: "3.0.0"\ninfo:\n  title: Sample Target API\n  version: 1.0.0\npaths:\n  /users:\n    get:\n      summary: Get users\n      responses:\n        "200":\n          description: OK'
+                  },
+                  specUrl: { type: 'string', example: 'https://petstore.swagger.io/v2/swagger.json' }
                 }
               }
             }
@@ -366,7 +401,7 @@ Features:
         }
       }
     },
-    '/api/v1/test/request': {
+    '/api/v1/test/execute': {
       post: {
         summary: 'Execute real HTTP request via SSRF-safe interactive proxy',
         tags: ['Interactive Testing'],
@@ -376,14 +411,14 @@ Features:
             'application/json': {
               schema: {
                 type: 'object',
-                required: ['url', 'method'],
+                required: ['url'],
                 properties: {
-                  url: { type: 'string' },
-                  method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'] },
-                  headers: { type: 'object' },
-                  body: { type: 'string' },
-                  timeout: { type: 'integer' },
-                  allowLocalLab: { type: 'boolean' }
+                  url: { type: 'string', example: 'http://localhost:5050/api/v1/users' },
+                  method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'], default: 'GET' },
+                  headers: { type: 'object', example: { 'Accept': 'application/json' } },
+                  body: { type: 'string', example: '' },
+                  timeout: { type: 'integer', default: 5000 },
+                  allowLocalLab: { type: 'boolean', default: true }
                 }
               }
             }
@@ -391,7 +426,7 @@ Features:
         },
         responses: {
           '200': { description: 'Live HTTP response with status, latency, headers, and body' },
-          '400': { description: 'SSRF blocked' }
+          '400': { description: 'SSRF blocked or invalid parameters' }
         }
       }
     },
@@ -414,7 +449,7 @@ Features:
                 type: 'object',
                 required: ['apiId'],
                 properties: {
-                  apiId: { type: 'string' },
+                  apiId: { type: 'string', description: 'MongoDB ObjectId of registered API target' },
                   scanType: { type: 'string', enum: ['full_owasp', 'quick_audit', 'auth_only', 'rate_limit'], default: 'full_owasp' }
                 }
               }
@@ -422,7 +457,9 @@ Features:
           }
         },
         responses: {
-          '201': { description: 'Scan completed and findings saved' }
+          '201': { description: 'Scan completed and findings saved' },
+          '400': { description: 'Invalid API ID' },
+          '404': { description: 'Target API not found' }
         }
       }
     },
@@ -431,7 +468,10 @@ Features:
         summary: 'Get scan details, severity counts, and execution logs',
         tags: ['Security Scans'],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'Scan details' } }
+        responses: {
+          '200': { description: 'Scan details' },
+          '404': { description: 'Scan not found' }
+        }
       }
     },
     '/api/v1/findings': {
@@ -441,14 +481,26 @@ Features:
         parameters: [
           { in: 'query', name: 'severity', schema: { type: 'string' } },
           { in: 'query', name: 'status', schema: { type: 'string' } },
-          { in: 'query', name: 'apiId', schema: { type: 'string' } }
+          { in: 'query', name: 'apiId', schema: { type: 'string' } },
+          { in: 'query', name: 'search', schema: { type: 'string' } }
         ],
         responses: { '200': { description: 'Matching findings list' } }
       }
     },
+    '/api/v1/findings/{id}': {
+      get: {
+        summary: 'Get finding details by ID',
+        tags: ['Vulnerability Findings'],
+        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'Finding details' },
+          '404': { description: 'Finding not found' }
+        }
+      }
+    },
     '/api/v1/findings/{id}/status': {
       patch: {
-        summary: 'Update finding remediation status (mitigated, open, false_positive)',
+        summary: 'Update finding remediation status',
         tags: ['Vulnerability Findings'],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         requestBody: {
@@ -459,13 +511,21 @@ Features:
                 type: 'object',
                 required: ['status'],
                 properties: {
-                  status: { type: 'string', enum: ['open', 'in_review', 'mitigated', 'false_positive'] }
+                  status: {
+                    type: 'string',
+                    enum: ['open', 'resolved', 'mitigated', 'in_review', 'false_positive'],
+                    example: 'resolved'
+                  }
                 }
               }
             }
           }
         },
-        responses: { '200': { description: 'Finding status updated' } }
+        responses: {
+          '200': { description: 'Finding status updated' },
+          '400': { description: 'Invalid status' },
+          '404': { description: 'Finding not found' }
+        }
       }
     },
     '/api/v1/monitoring': {
@@ -475,26 +535,89 @@ Features:
         responses: { '200': { description: 'Monitoring configs' } }
       }
     },
-    '/api/v1/monitoring/{id}/trigger': {
+    '/api/v1/monitoring/{id}': {
+      get: {
+        summary: 'Get monitoring configuration by ID or API ID',
+        tags: ['Monitoring'],
+        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'Monitoring config details' },
+          '404': { description: 'Monitoring config not found' }
+        }
+      },
+      put: {
+        summary: 'Update monitoring interval and latency thresholds',
+        tags: ['Monitoring'],
+        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  isEnabled: { type: 'boolean', default: true },
+                  intervalMinutes: { type: 'integer', default: 5 },
+                  latencyThresholdMs: { type: 'integer', default: 1000 }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Monitoring config updated' },
+          '404': { description: 'Monitoring config not found' }
+        }
+      }
+    },
+    '/api/v1/monitoring/{id}/ping': {
       post: {
         summary: 'Trigger immediate health and latency check',
         tags: ['Monitoring'],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'Health check completed' } }
+        responses: {
+          '200': { description: 'Health check completed' },
+          '404': { description: 'Monitoring config not found' }
+        }
+      }
+    },
+    '/api/v1/monitoring/{id}/toggle': {
+      post: {
+        summary: 'Toggle monitoring state (enabled / disabled)',
+        tags: ['Monitoring'],
+        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'Monitoring toggled' },
+          '404': { description: 'Monitoring config not found' }
+        }
       }
     },
     '/api/v1/dashboard/stats': {
       get: {
-        summary: 'Get consolidated executive SOC metrics and risk score',
+        summary: 'Get consolidated executive SOC metrics and risk scores',
         tags: ['Dashboard'],
         responses: { '200': { description: 'Dashboard stats' } }
+      }
+    },
+    '/api/v1/reports/json': {
+      get: {
+        summary: 'Export structured security audit report in JSON',
+        tags: ['Reports'],
+        parameters: [
+          { in: 'query', name: 'scanId', schema: { type: 'string' } },
+          { in: 'query', name: 'apiId', schema: { type: 'string' } }
+        ],
+        responses: { '200': { description: 'JSON report' } }
       }
     },
     '/api/v1/reports/pdf': {
       get: {
         summary: 'Generate formal PDF audit report',
         tags: ['Reports'],
-        parameters: [{ in: 'query', name: 'scanId', schema: { type: 'string' } }],
+        parameters: [
+          { in: 'query', name: 'scanId', schema: { type: 'string' } },
+          { in: 'query', name: 'apiId', schema: { type: 'string' } }
+        ],
         responses: { '200': { description: 'PDF binary stream' } }
       }
     },
@@ -534,6 +657,66 @@ Features:
         }
       }
     },
+    '/api/v1/simulation/scenarios': {
+      get: {
+        summary: 'List available OWASP API vulnerability simulation scenarios',
+        tags: ['Simulation Lab'],
+        responses: { '200': { description: 'Available scenarios' } }
+      }
+    },
+    '/api/v1/simulation/execute': {
+      post: {
+        summary: 'Trigger simulated attack scenario against Vulnerable Lab',
+        tags: ['Simulation Lab'],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  scenarioId: {
+                    type: 'string',
+                    enum: ['bola', 'broken_auth', 'excessive_data', 'permissive_cors', 'missing_headers', 'unrestricted_resource', 'bfla'],
+                    default: 'bola'
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Simulation result with live evidence' },
+          '404': { description: 'Scenario not found' }
+        }
+      }
+    },
+    '/api/v1/simulation/trigger/{id}': {
+      post: {
+        summary: 'Trigger simulated exploit by scenario ID in URL',
+        tags: ['Simulation Lab'],
+        parameters: [
+          {
+            in: 'path',
+            name: 'id',
+            required: true,
+            schema: {
+              type: 'string',
+              enum: ['bola', 'broken_auth', 'excessive_data', 'permissive_cors', 'missing_headers', 'unrestricted_resource', 'bfla'],
+              default: 'bola'
+            }
+          }
+        ],
+        responses: { '200': { description: 'Simulation result' } }
+      }
+    },
+    '/api/v1/settings': {
+      get: {
+        summary: 'Get platform environment and SSRF security configurations',
+        tags: ['Settings'],
+        responses: { '200': { description: 'System settings' } }
+      }
+    },
     '/api/v1/webhooks': {
       get: {
         summary: 'List registered alerting webhooks',
@@ -568,14 +751,15 @@ Features:
                 required: ['name', 'url'],
                 properties: {
                   name: { type: 'string', example: 'SecOps Incident Webhook' },
-                  url: { type: 'string', example: 'https://hooks.example.com/alerts' },
+                  url: { type: 'string', example: 'https://webhook.site/demo-destination' },
                   secret: { type: 'string', description: 'Optional custom HMAC secret (auto-generated if omitted)' },
                   events: {
                     type: 'array',
                     items: {
                       type: 'string',
                       enum: ['scan.completed', 'scan.failed', 'finding.detected', 'monitoring.alert', 'monitoring.recovered', '*']
-                    }
+                    },
+                    default: ['scan.completed', 'finding.detected', 'monitoring.alert']
                   },
                   isActive: { type: 'boolean', default: true },
                   customHeaders: { type: 'object' }
@@ -595,19 +779,44 @@ Features:
         summary: 'Get webhook by ID with delivery history log',
         tags: ['Webhooks'],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'Webhook details and delivery logs' } }
+        responses: {
+          '200': { description: 'Webhook details and delivery logs' },
+          '404': { description: 'Webhook not found' }
+        }
       },
       put: {
         summary: 'Update webhook configuration',
         tags: ['Webhooks'],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'Webhook updated' } }
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  url: { type: 'string' },
+                  events: { type: 'array', items: { type: 'string' } },
+                  isActive: { type: 'boolean' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Webhook updated' },
+          '404': { description: 'Webhook not found' }
+        }
       },
       delete: {
         summary: 'Delete webhook endpoint',
         tags: ['Webhooks'],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'Webhook deleted' } }
+        responses: {
+          '200': { description: 'Webhook deleted' },
+          '404': { description: 'Webhook not found' }
+        }
       }
     },
     '/api/v1/webhooks/{id}/test': {
@@ -616,30 +825,9 @@ Features:
         tags: ['Webhooks'],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
-          '200': { description: 'Delivery result with latency and HTTP status' }
+          '200': { description: 'Delivery result with latency and HTTP status' },
+          '404': { description: 'Webhook not found' }
         }
-      }
-    },
-    '/api/v1/simulation/scenarios': {
-      get: {
-        summary: 'List available OWASP API vulnerability simulation scenarios',
-        tags: ['Simulation Lab'],
-        responses: { '200': { description: 'Available scenarios' } }
-      }
-    },
-    '/api/v1/simulation/trigger/{id}': {
-      post: {
-        summary: 'Trigger simulated exploit against Vulnerable Lab',
-        tags: ['Simulation Lab'],
-        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'Simulation result' } }
-      }
-    },
-    '/api/v1/settings': {
-      get: {
-        summary: 'Get platform environment and SSRF security configurations',
-        tags: ['Settings'],
-        responses: { '200': { description: 'System settings' } }
       }
     }
   }

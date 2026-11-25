@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { Api } from '../models/Api';
 import { MonitoringConfig } from '../models/Monitoring';
@@ -35,6 +36,10 @@ export async function listApis(req: AuthenticatedRequest, res: Response): Promis
 
 export async function getApiById(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'API not found' });
+      return;
+    }
     const api = await Api.findOne({ _id: req.params.id, createdBy: req.user!._id });
     if (!api) {
       res.status(404).json({ success: false, message: 'API not found' });
@@ -158,6 +163,10 @@ export async function createApi(req: AuthenticatedRequest, res: Response): Promi
 
 export async function updateApi(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'API not found' });
+      return;
+    }
     const api = await Api.findOne({ _id: req.params.id, createdBy: req.user!._id });
     if (!api) {
       res.status(404).json({ success: false, message: 'API not found' });
@@ -222,6 +231,10 @@ export async function updateApi(req: AuthenticatedRequest, res: Response): Promi
 
 export async function deleteApi(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'API not found' });
+      return;
+    }
     const api = await Api.findOneAndDelete({ _id: req.params.id, createdBy: req.user!._id });
     if (!api) {
       res.status(404).json({ success: false, message: 'API not found' });
@@ -274,6 +287,10 @@ export async function importOpenApi(req: AuthenticatedRequest, res: Response): P
 
 export async function exportApiAsPostman(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'API not found' });
+      return;
+    }
     const api = await Api.findOne({ _id: req.params.id, createdBy: req.user!._id });
     if (!api) {
       res.status(404).json({ success: false, message: 'API not found' });

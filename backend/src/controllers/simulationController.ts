@@ -99,11 +99,11 @@ export async function listScenarios(req: AuthenticatedRequest, res: Response): P
 
 export async function executeScenario(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { scenarioId } = req.body;
+    const scenarioId = req.body?.scenarioId || req.params?.id || req.body?.id || 'bola';
     const scenario = SIMULATION_SCENARIOS.find((s) => s.id === scenarioId);
 
     if (!scenario) {
-      res.status(404).json({ success: false, message: 'Scenario not found' });
+      res.status(404).json({ success: false, message: `Scenario '${scenarioId}' not found. Available: ${SIMULATION_SCENARIOS.map(s => s.id).join(', ')}` });
       return;
     }
 

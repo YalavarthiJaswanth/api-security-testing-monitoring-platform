@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { Api } from '../models/Api';
 import { Scan } from '../models/Scan';
@@ -12,8 +13,8 @@ export async function triggerScan(req: AuthenticatedRequest, res: Response): Pro
   try {
     const { apiId, scanType = 'full_owasp' } = req.body;
 
-    if (!apiId) {
-      res.status(400).json({ success: false, message: 'API ID is required' });
+    if (!apiId || !mongoose.Types.ObjectId.isValid(apiId)) {
+      res.status(400).json({ success: false, message: 'A valid API ID is required' });
       return;
     }
 
@@ -209,6 +210,10 @@ export async function listScans(req: AuthenticatedRequest, res: Response): Promi
 
 export async function getScanById(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'Scan not found' });
+      return;
+    }
     const scan = await Scan.findOne({ _id: req.params.id, createdBy: req.user!._id })
       .populate('apiId', 'name baseUrl environment');
 

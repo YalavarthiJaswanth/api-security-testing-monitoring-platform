@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { Webhook } from '../models/Webhook';
 import { webhookService } from '../services/webhookService';
@@ -31,6 +32,10 @@ export async function listWebhooks(req: AuthenticatedRequest, res: Response): Pr
 
 export async function getWebhookById(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'Webhook not found' });
+      return;
+    }
     const webhook = await Webhook.findOne({ _id: req.params.id, createdBy: req.user!._id });
     if (!webhook) {
       res.status(404).json({ success: false, message: 'Webhook not found' });
@@ -111,6 +116,10 @@ export async function createWebhook(req: AuthenticatedRequest, res: Response): P
 
 export async function updateWebhook(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'Webhook not found' });
+      return;
+    }
     const webhook = await Webhook.findOne({ _id: req.params.id, createdBy: req.user!._id });
     if (!webhook) {
       res.status(404).json({ success: false, message: 'Webhook not found' });
@@ -155,6 +164,10 @@ export async function updateWebhook(req: AuthenticatedRequest, res: Response): P
 
 export async function deleteWebhook(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'Webhook not found' });
+      return;
+    }
     const webhook = await Webhook.findOneAndDelete({ _id: req.params.id, createdBy: req.user!._id });
     if (!webhook) {
       res.status(404).json({ success: false, message: 'Webhook not found' });
@@ -169,6 +182,10 @@ export async function deleteWebhook(req: AuthenticatedRequest, res: Response): P
 
 export async function testWebhook(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'Webhook not found' });
+      return;
+    }
     const result = await webhookService.testWebhook(req.params.id, req.user!._id.toString());
     res.json({
       success: result.success,

@@ -6,5 +6,6 @@ const router = Router();
 
 router.use(authenticate);
 router.post('/execute', testEndpoint);
+router.post('/request', testEndpoint);
 
 export default router;

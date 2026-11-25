@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { Scan } from '../models/Scan';
 import { Finding } from '../models/Finding';
@@ -13,11 +14,11 @@ export async function exportJsonReport(req: AuthenticatedRequest, res: Response)
     const { scanId, apiId } = req.query;
     let query: any = { createdBy: req.user!._id };
 
-    if (scanId) query.scanId = scanId;
-    if (apiId) query.apiId = apiId;
+    if (scanId && mongoose.Types.ObjectId.isValid(String(scanId))) query.scanId = scanId;
+    if (apiId && mongoose.Types.ObjectId.isValid(String(apiId))) query.apiId = apiId;
 
     const findings = await Finding.find(query).populate('apiId', 'name baseUrl environment');
-    const scan = scanId ? await Scan.findById(scanId) : null;
+    const scan = (scanId && mongoose.Types.ObjectId.isValid(String(scanId))) ? await Scan.findById(scanId) : null;
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename=api-sentinel-report-${Date.now()}.json`);
@@ -39,12 +40,12 @@ export async function exportPdfReport(req: AuthenticatedRequest, res: Response):
     const { scanId, apiId } = req.query;
     let query: any = { createdBy: req.user!._id };
 
-    if (scanId) query.scanId = scanId;
-    if (apiId) query.apiId = apiId;
+    if (scanId && mongoose.Types.ObjectId.isValid(String(scanId))) query.scanId = scanId;
+    if (apiId && mongoose.Types.ObjectId.isValid(String(apiId))) query.apiId = apiId;
 
     const findings = await Finding.find(query).populate('apiId', 'name baseUrl environment');
-    const scan = scanId ? await Scan.findById(scanId).populate('apiId', 'name baseUrl') : null;
-    const api = apiId ? await Api.findById(apiId) : (scan ? scan.apiId : null);
+    const scan = (scanId && mongoose.Types.ObjectId.isValid(String(scanId))) ? await Scan.findById(scanId).populate('apiId', 'name baseUrl') : null;
+    const api = (apiId && mongoose.Types.ObjectId.isValid(String(apiId))) ? await Api.findById(apiId) : (scan ? scan.apiId : null);
 
     const doc = new jsPDF();
 

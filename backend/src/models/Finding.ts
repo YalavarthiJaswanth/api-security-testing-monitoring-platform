@@ -22,7 +22,7 @@ export interface IFinding extends Document {
   potentialImpact: string;
   remediation: string;
   confidence: 'confirmed' | 'probable' | 'potential';
-  status: 'open' | 'resolved' | 'false_positive';
+  status: 'open' | 'resolved' | 'mitigated' | 'in_review' | 'false_positive';
   isSimulation: boolean;
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -63,7 +63,7 @@ const FindingSchema = new Schema<IFinding>(
     },
     status: {
       type: String,
-      enum: ['open', 'resolved', 'false_positive'],
+      enum: ['open', 'resolved', 'mitigated', 'in_review', 'false_positive'],
       default: 'open',
       index: true
     },

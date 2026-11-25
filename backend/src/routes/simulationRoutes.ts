@@ -7,5 +7,7 @@ const router = Router();
 router.use(authenticate);
 router.get('/scenarios', listScenarios);
 router.post('/execute', executeScenario);
+router.post('/trigger/:id', executeScenario);
+router.post('/trigger', executeScenario);
 
 export default router;

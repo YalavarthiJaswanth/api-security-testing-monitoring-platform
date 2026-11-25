@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { Finding } from '../models/Finding';
 
@@ -10,7 +11,7 @@ export async function listFindings(req: AuthenticatedRequest, res: Response): Pr
 
     if (severity) query.severity = severity;
     if (owaspCategory) query.owaspCategory = owaspCategory;
-    if (apiId) query.apiId = apiId;
+    if (apiId && mongoose.Types.ObjectId.isValid(String(apiId))) query.apiId = apiId;
     if (status) query.status = status;
     if (isSimulation !== undefined) query.isSimulation = isSimulation === 'true';
 
@@ -35,6 +36,11 @@ export async function listFindings(req: AuthenticatedRequest, res: Response): Pr
 
 export async function getFindingById(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'Finding not found' });
+      return;
+    }
+
     const finding = await Finding.findOne({ _id: req.params.id, createdBy: req.user!._id })
       .populate('apiId', 'name baseUrl environment')
       .populate('scanId', 'scanType status createdAt');
@@ -52,9 +58,18 @@ export async function getFindingById(req: AuthenticatedRequest, res: Response): 
 
 export async function updateFindingStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      res.status(404).json({ success: false, message: 'Finding not found' });
+      return;
+    }
+
     const { status } = req.body;
-    if (!['open', 'resolved', 'false_positive'].includes(status)) {
-      res.status(400).json({ success: false, message: 'Invalid status value' });
+    const validStatuses = ['open', 'resolved', 'mitigated', 'in_review', 'false_positive'];
+    if (!validStatuses.includes(status)) {
+      res.status(400).json({
+        success: false,
+        message: `Invalid status value. Must be one of: ${validStatuses.join(', ')}`
+      });
       return;
     }
 

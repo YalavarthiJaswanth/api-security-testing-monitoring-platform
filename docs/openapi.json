@@ -6,7 +6,7 @@
     "description": "Enterprise-grade API Security Testing & Continuous Monitoring Platform.\n    \nFeatures:\n- Automated OWASP API Security Top 10 (2023) vulnerability scanning\n- Continuous latency & uptime health monitoring with alert thresholds\n- Cryptographic credential management (AES-256-GCM)\n- SSRF-protected interactive API testing proxy\n- Webhook alert notifications with HMAC-SHA256 signatures\n- Dynamic Postman collection exports & OpenAPI 3.0 spec import/export\n- Isolated Vulnerable Lab & attack simulation environment",
     "contact": {
       "name": "API Sentinel Security Team",
-      "url": "https://github.com/apisentinel/platform"
+      "url": "https://github.com/YalavarthiJaswanth/api-security-testing-monitoring-platform"
     },
     "license": {
       "name": "MIT"
@@ -48,8 +48,8 @@
             "type": "string",
             "enum": [
               "admin",
-              "analyst",
-              "auditor"
+              "security_engineer",
+              "viewer"
             ]
           }
         }
@@ -249,8 +249,9 @@
             "type": "string",
             "enum": [
               "open",
-              "in_review",
+              "resolved",
               "mitigated",
+              "in_review",
               "false_positive"
             ]
           }
@@ -405,6 +406,15 @@
                   "password": {
                     "type": "string",
                     "example": "SecPass2026!"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "admin",
+                      "security_engineer",
+                      "viewer"
+                    ],
+                    "default": "security_engineer"
                   }
                 }
               }
@@ -417,6 +427,9 @@
           },
           "400": {
             "description": "Validation error"
+          },
+          "409": {
+            "description": "User already exists"
           }
         }
       }
@@ -435,11 +448,14 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "email",
                   "password"
                 ],
                 "properties": {
                   "email": {
+                    "type": "string",
+                    "example": "lead@apisentinel.local"
+                  },
+                  "emailOrUsername": {
                     "type": "string",
                     "example": "lead@apisentinel.local"
                   },
@@ -461,7 +477,8 @@
                   "type": "object",
                   "properties": {
                     "success": {
-                      "type": "boolean"
+                      "type": "boolean",
+                      "example": true
                     },
                     "token": {
                       "type": "string"
@@ -473,6 +490,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Email/username and password required"
           },
           "401": {
             "description": "Invalid credentials"
@@ -546,22 +566,44 @@
                 ],
                 "properties": {
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Online Payments API"
                   },
                   "baseUrl": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "http://localhost:5050"
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Core financial transactions service"
                   },
                   "environment": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                      "development",
+                      "staging",
+                      "production"
+                    ],
+                    "default": "development"
                   },
                   "authType": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "bearer",
+                      "apiKey",
+                      "basic"
+                    ],
+                    "default": "none"
                   },
                   "credentials": {
-                    "type": "object"
+                    "type": "object",
+                    "properties": {
+                      "token": {
+                        "type": "string",
+                        "example": "sample-bearer-token"
+                      }
+                    }
                   },
                   "endpoints": {
                     "type": "array",
@@ -573,7 +615,8 @@
                     "type": "string"
                   },
                   "isLabApi": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "default": false
                   }
                 }
               }
@@ -582,7 +625,7 @@
         },
         "responses": {
           "201": {
-            "description": "API registered"
+            "description": "API registered successfully"
           },
           "400": {
             "description": "Invalid target URL or SSRF violation"
@@ -630,9 +673,36 @@
             }
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "baseUrl": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "environment": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Updated successfully"
+          },
+          "404": {
+            "description": "API not found"
           }
         }
       },
@@ -654,6 +724,9 @@
         "responses": {
           "200": {
             "description": "Deleted successfully"
+          },
+          "404": {
+            "description": "API not found"
           }
         }
       }
@@ -681,6 +754,9 @@
             "content": {
               "application/json": {}
             }
+          },
+          "404": {
+            "description": "API not found"
           }
         }
       }
@@ -701,11 +777,11 @@
                 "properties": {
                   "specContent": {
                     "type": "string",
-                    "description": "Raw JSON or YAML OpenAPI spec"
+                    "example": "openapi: \"3.0.0\"\ninfo:\n  title: Sample Target API\n  version: 1.0.0\npaths:\n  /users:\n    get:\n      summary: Get users\n      responses:\n        \"200\":\n          description: OK"
                   },
                   "specUrl": {
                     "type": "string",
-                    "description": "Remote URL to fetch OpenAPI spec from"
+                    "example": "https://petstore.swagger.io/v2/swagger.json"
                   }
                 }
               }
@@ -722,7 +798,7 @@
         }
       }
     },
-    "/api/v1/test/request": {
+    "/api/v1/test/execute": {
       "post": {
         "summary": "Execute real HTTP request via SSRF-safe interactive proxy",
         "tags": [
@@ -735,12 +811,12 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "url",
-                  "method"
+                  "url"
                 ],
                 "properties": {
                   "url": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "http://localhost:5050/api/v1/users"
                   },
                   "method": {
                     "type": "string",
@@ -752,19 +828,26 @@
                       "PATCH",
                       "OPTIONS",
                       "HEAD"
-                    ]
+                    ],
+                    "default": "GET"
                   },
                   "headers": {
-                    "type": "object"
+                    "type": "object",
+                    "example": {
+                      "Accept": "application/json"
+                    }
                   },
                   "body": {
-                    "type": "string"
+                    "type": "string",
+                    "example": ""
                   },
                   "timeout": {
-                    "type": "integer"
+                    "type": "integer",
+                    "default": 5000
                   },
                   "allowLocalLab": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "default": true
                   }
                 }
               }
@@ -776,7 +859,7 @@
             "description": "Live HTTP response with status, latency, headers, and body"
           },
           "400": {
-            "description": "SSRF blocked"
+            "description": "SSRF blocked or invalid parameters"
           }
         }
       }
@@ -811,7 +894,8 @@
                 ],
                 "properties": {
                   "apiId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "MongoDB ObjectId of registered API target"
                   },
                   "scanType": {
                     "type": "string",
@@ -831,6 +915,12 @@
         "responses": {
           "201": {
             "description": "Scan completed and findings saved"
+          },
+          "400": {
+            "description": "Invalid API ID"
+          },
+          "404": {
+            "description": "Target API not found"
           }
         }
       }
@@ -854,6 +944,9 @@
         "responses": {
           "200": {
             "description": "Scan details"
+          },
+          "404": {
+            "description": "Scan not found"
           }
         }
       }
@@ -885,6 +978,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -894,9 +994,35 @@
         }
       }
     },
+    "/api/v1/findings/{id}": {
+      "get": {
+        "summary": "Get finding details by ID",
+        "tags": [
+          "Vulnerability Findings"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Finding details"
+          },
+          "404": {
+            "description": "Finding not found"
+          }
+        }
+      }
+    },
     "/api/v1/findings/{id}/status": {
       "patch": {
-        "summary": "Update finding remediation status (mitigated, open, false_positive)",
+        "summary": "Update finding remediation status",
         "tags": [
           "Vulnerability Findings"
         ],
@@ -924,10 +1050,12 @@
                     "type": "string",
                     "enum": [
                       "open",
-                      "in_review",
+                      "resolved",
                       "mitigated",
+                      "in_review",
                       "false_positive"
-                    ]
+                    ],
+                    "example": "resolved"
                   }
                 }
               }
@@ -937,6 +1065,12 @@
         "responses": {
           "200": {
             "description": "Finding status updated"
+          },
+          "400": {
+            "description": "Invalid status"
+          },
+          "404": {
+            "description": "Finding not found"
           }
         }
       }
@@ -954,7 +1088,81 @@
         }
       }
     },
-    "/api/v1/monitoring/{id}/trigger": {
+    "/api/v1/monitoring/{id}": {
+      "get": {
+        "summary": "Get monitoring configuration by ID or API ID",
+        "tags": [
+          "Monitoring"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Monitoring config details"
+          },
+          "404": {
+            "description": "Monitoring config not found"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update monitoring interval and latency thresholds",
+        "tags": [
+          "Monitoring"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "isEnabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "intervalMinutes": {
+                    "type": "integer",
+                    "default": 5
+                  },
+                  "latencyThresholdMs": {
+                    "type": "integer",
+                    "default": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Monitoring config updated"
+          },
+          "404": {
+            "description": "Monitoring config not found"
+          }
+        }
+      }
+    },
+    "/api/v1/monitoring/{id}/ping": {
       "post": {
         "summary": "Trigger immediate health and latency check",
         "tags": [
@@ -973,19 +1181,77 @@
         "responses": {
           "200": {
             "description": "Health check completed"
+          },
+          "404": {
+            "description": "Monitoring config not found"
+          }
+        }
+      }
+    },
+    "/api/v1/monitoring/{id}/toggle": {
+      "post": {
+        "summary": "Toggle monitoring state (enabled / disabled)",
+        "tags": [
+          "Monitoring"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Monitoring toggled"
+          },
+          "404": {
+            "description": "Monitoring config not found"
           }
         }
       }
     },
     "/api/v1/dashboard/stats": {
       "get": {
-        "summary": "Get consolidated executive SOC metrics and risk score",
+        "summary": "Get consolidated executive SOC metrics and risk scores",
         "tags": [
           "Dashboard"
         ],
         "responses": {
           "200": {
             "description": "Dashboard stats"
+          }
+        }
+      }
+    },
+    "/api/v1/reports/json": {
+      "get": {
+        "summary": "Export structured security audit report in JSON",
+        "tags": [
+          "Reports"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scanId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "apiId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON report"
           }
         }
       }
@@ -1000,6 +1266,13 @@
           {
             "in": "query",
             "name": "scanId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "apiId",
             "schema": {
               "type": "string"
             }
@@ -1063,6 +1336,106 @@
         }
       }
     },
+    "/api/v1/simulation/scenarios": {
+      "get": {
+        "summary": "List available OWASP API vulnerability simulation scenarios",
+        "tags": [
+          "Simulation Lab"
+        ],
+        "responses": {
+          "200": {
+            "description": "Available scenarios"
+          }
+        }
+      }
+    },
+    "/api/v1/simulation/execute": {
+      "post": {
+        "summary": "Trigger simulated attack scenario against Vulnerable Lab",
+        "tags": [
+          "Simulation Lab"
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "scenarioId": {
+                    "type": "string",
+                    "enum": [
+                      "bola",
+                      "broken_auth",
+                      "excessive_data",
+                      "permissive_cors",
+                      "missing_headers",
+                      "unrestricted_resource",
+                      "bfla"
+                    ],
+                    "default": "bola"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Simulation result with live evidence"
+          },
+          "404": {
+            "description": "Scenario not found"
+          }
+        }
+      }
+    },
+    "/api/v1/simulation/trigger/{id}": {
+      "post": {
+        "summary": "Trigger simulated exploit by scenario ID in URL",
+        "tags": [
+          "Simulation Lab"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bola",
+                "broken_auth",
+                "excessive_data",
+                "permissive_cors",
+                "missing_headers",
+                "unrestricted_resource",
+                "bfla"
+              ],
+              "default": "bola"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Simulation result"
+          }
+        }
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "summary": "Get platform environment and SSRF security configurations",
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "System settings"
+          }
+        }
+      }
+    },
     "/api/v1/webhooks": {
       "get": {
         "summary": "List registered alerting webhooks",
@@ -1118,7 +1491,7 @@
                   },
                   "url": {
                     "type": "string",
-                    "example": "https://hooks.example.com/alerts"
+                    "example": "https://webhook.site/demo-destination"
                   },
                   "secret": {
                     "type": "string",
@@ -1136,7 +1509,12 @@
                         "monitoring.recovered",
                         "*"
                       ]
-                    }
+                    },
+                    "default": [
+                      "scan.completed",
+                      "finding.detected",
+                      "monitoring.alert"
+                    ]
                   },
                   "isActive": {
                     "type": "boolean",
@@ -1179,6 +1557,9 @@
         "responses": {
           "200": {
             "description": "Webhook details and delivery logs"
+          },
+          "404": {
+            "description": "Webhook not found"
           }
         }
       },
@@ -1197,9 +1578,39 @@
             }
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Webhook updated"
+          },
+          "404": {
+            "description": "Webhook not found"
           }
         }
       },
@@ -1221,6 +1632,9 @@
         "responses": {
           "200": {
             "description": "Webhook deleted"
+          },
+          "404": {
+            "description": "Webhook not found"
           }
         }
       }
@@ -1244,55 +1658,9 @@
         "responses": {
           "200": {
             "description": "Delivery result with latency and HTTP status"
-          }
-        }
-      }
-    },
-    "/api/v1/simulation/scenarios": {
-      "get": {
-        "summary": "List available OWASP API vulnerability simulation scenarios",
-        "tags": [
-          "Simulation Lab"
-        ],
-        "responses": {
-          "200": {
-            "description": "Available scenarios"
-          }
-        }
-      }
-    },
-    "/api/v1/simulation/trigger/{id}": {
-      "post": {
-        "summary": "Trigger simulated exploit against Vulnerable Lab",
-        "tags": [
-          "Simulation Lab"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Simulation result"
-          }
-        }
-      }
-    },
-    "/api/v1/settings": {
-      "get": {
-        "summary": "Get platform environment and SSRF security configurations",
-        "tags": [
-          "Settings"
-        ],
-        "responses": {
-          "200": {
-            "description": "System settings"
+          },
+          "404": {
+            "description": "Webhook not found"
           }
         }
       }
