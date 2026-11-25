@@ -18,6 +18,7 @@ venv/
 .env.*.local
 *.pem
 *.key
+*.crt
 
 # Logs
 *.log
